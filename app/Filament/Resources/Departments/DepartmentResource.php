@@ -48,16 +48,18 @@ class DepartmentResource extends Resource
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->label('Department Name'),
 
                 TextColumn::make('code')
                     ->searchable()
                     ->sortable()
-                    ->label('Department Code'),
+                    ->label('Code'),
 
                 TextColumn::make('created_at')
                     ->dateTime('d M Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->label('Created'),
             ])
             ->actions([
                 \Filament\Actions\EditAction::make(),

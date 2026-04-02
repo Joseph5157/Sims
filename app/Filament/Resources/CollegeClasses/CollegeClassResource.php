@@ -67,13 +67,21 @@ class CollegeClassResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->sortable()->searchable(),
-                TextColumn::make('section'),
-                TextColumn::make('department.name')
+                TextColumn::make('name')
+                    ->label('Class Name')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('semester'),
-                TextColumn::make('academic_year'),
+                TextColumn::make('section'),
+                TextColumn::make('department.name')
+                    ->label('Department')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('semester')
+                    ->label('Semester')
+                    ->sortable(),
+                TextColumn::make('academic_year')
+                    ->label('Academic Year')
+                    ->sortable(),
                 TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->actions([
