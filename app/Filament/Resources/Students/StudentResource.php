@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Students;
 
+use App\Filament\Resources\Concerns\InteractsWithRoleAccess;
 use App\Filament\Resources\Students\Pages\CreateStudent;
 use App\Filament\Resources\Students\Pages\EditStudent;
 use App\Filament\Resources\Students\Pages\ListStudents;
@@ -14,14 +15,47 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class StudentResource extends Resource
 {
+    use InteractsWithRoleAccess;
+
     protected static ?string $model = Student::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'roll_number';
+
+    public static function canViewAny(): bool
+    {
+        return static::userHasAnyRole(['admin', 'faculty']);
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::userHasRole('admin');
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return static::userHasRole('admin');
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return static::userHasRole('admin');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::userHasRole('admin');
+    }
 
     public static function form(Schema $form): Schema
     {

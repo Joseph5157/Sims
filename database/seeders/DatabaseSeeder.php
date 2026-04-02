@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,11 +17,41 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $facultyRole = Role::firstOrCreate(['name' => 'faculty', 'guard_name' => 'web']);
+        $studentRole = Role::firstOrCreate(['name' => 'student', 'guard_name' => 'web']);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $adminUser = User::query()->firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'System Admin',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ],
+        );
+
+        $adminUser->syncRoles([$adminRole]);
+
+        $facultyUser = User::query()->firstOrCreate(
+            ['email' => 'faculty@example.com'],
+            [
+                'name' => 'Faculty User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ],
+        );
+
+        $facultyUser->syncRoles([$facultyRole]);
+
+        $studentUser = User::query()->firstOrCreate(
+            ['email' => 'student@example.com'],
+            [
+                'name' => 'Student User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ],
+        );
+
+        $studentUser->syncRoles([$studentRole]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DisciplineCases;
 
+use App\Filament\Resources\Concerns\InteractsWithRoleAccess;
 use App\Filament\Resources\DisciplineCases\Pages\CreateDisciplineCase;
 use App\Filament\Resources\DisciplineCases\Pages\EditDisciplineCase;
 use App\Filament\Resources\DisciplineCases\Pages\ListDisciplineCases;
@@ -16,14 +17,47 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class DisciplineCaseResource extends Resource
 {
+    use InteractsWithRoleAccess;
+
     protected static ?string $model = DisciplineCase::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'title';
+
+    public static function canViewAny(): bool
+    {
+        return static::userHasAnyRole(['admin', 'faculty']);
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::userHasAnyRole(['admin', 'faculty']);
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return static::userHasAnyRole(['admin', 'faculty']);
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return static::userHasRole('admin');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::userHasRole('admin');
+    }
 
     public static function form(Schema $form): Schema
     {

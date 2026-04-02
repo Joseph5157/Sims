@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\User;
+use Spatie\Permission\Models\Permission;
+
+class PermissionPolicy
+{
+    public function before(User $user, string $ability): ?bool
+    {
+        return $user->hasRole('admin') ? true : null;
+    }
+
+    public function viewAny(User $user): bool
+    {
+        return false;
+    }
+
+    public function view(User $user, Permission $permission): bool
+    {
+        return false;
+    }
+
+    public function create(User $user): bool
+    {
+        return false;
+    }
+
+    public function update(User $user, Permission $permission): bool
+    {
+        return false;
+    }
+
+    public function delete(User $user, Permission $permission): bool
+    {
+        return false;
+    }
+
+    public function deleteAny(User $user): bool
+    {
+        return false;
+    }
+}

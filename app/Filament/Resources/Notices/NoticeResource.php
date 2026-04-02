@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Notices;
 
+use App\Filament\Resources\Concerns\InteractsWithRoleAccess;
 use App\Filament\Resources\Notices\Pages\CreateNotice;
 use App\Filament\Resources\Notices\Pages\EditNotice;
 use App\Filament\Resources\Notices\Pages\ListNotices;
@@ -16,14 +17,48 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class NoticeResource extends Resource
 {
+    use InteractsWithRoleAccess;
+
     protected static ?string $model = Notice::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'title';
+
+    public static function canViewAny(): bool
+    {
+        return Auth::check();
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return Auth::check();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::userHasAnyRole(['admin', 'faculty']);
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return static::userHasAnyRole(['admin', 'faculty']);
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return static::userHasRole('admin');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::userHasRole('admin');
+    }
 
     public static function form(Schema $form): Schema
     {

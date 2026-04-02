@@ -7,8 +7,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "althinect/filament-spatie-roles-permissions": "*",
         "laravel/framework": "^13.0",
-        "laravel/tinker": "^3.0"
+        "laravel/tinker": "^3.0",
+        "spatie/laravel-permission": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
