@@ -4,6 +4,7 @@ namespace App\Filament\Faculty\Resources\Attendances;
 
 use App\Models\Attendance;
 use App\Models\CollegeClass;
+use App\Models\Student;
 use App\Models\Subject;
 use App\Models\User;
 use BackedEnum;
@@ -42,7 +43,28 @@ class AttendanceResource extends Resource
                     ->options(CollegeClass::pluck('name', 'id'))
                     ->required()
                     ->live()
-                    ->afterStateUpdated(fn (Set $set) => $set('subject_id', null)),
+                    ->afterStateUpdated(function (Get $get, Set $set) {
+                        $classId = $get('college_class_id');
+
+                        $set('subject_id', null);
+
+                        if ($classId) {
+                            $students = Student::where('college_class_id', $classId)
+                                ->with('user')
+                                ->get()
+                                ->map(function ($student) {
+                                    return [
+                                        'student_id' => $student->id,
+                                        'status' => 'present',
+                                    ];
+                                })
+                                ->toArray();
+
+                            $set('students', $students);
+                        } else {
+                            $set('students', []);
+                        }
+                    }),
 
                 Forms\Components\Select::make('subject_id')
                     ->label('Select Subject')
@@ -60,22 +82,27 @@ class AttendanceResource extends Resource
                     ->required()
                     ->default(now()),
 
-                \Filament\Schemas\Components\Section::make('Students Attendance')
+                \Filament\Schemas\Components\Section::make('Mark Attendance for Students')
                     ->schema([
                         Forms\Components\Repeater::make('students')
                             ->label('')
                             ->schema([
                                 Forms\Components\Select::make('student_id')
                                     ->label('Student')
-                                    ->options(function () {
-                                        return \App\Models\Student::with('user')
-                                            ->get()
-                                            ->pluck('user.name', 'id')
-                                            ->mapWithKeys(fn ($name, $id) => [$id => $name]);
+                                    ->options(function (Get $get) {
+                                        $classId = $get('../../college_class_id');
+
+                                        return $classId
+                                            ? Student::where('college_class_id', $classId)
+                                                ->with('user')
+                                                ->get()
+                                                ->pluck('user.name', 'id')
+                                            : [];
                                     })
                                     ->required()
                                     ->searchable()
-                                    ->preload(),
+                                    ->disabled()
+                                    ->dehydrated(),
 
                                 Forms\Components\Select::make('status')
                                     ->options([
@@ -87,10 +114,11 @@ class AttendanceResource extends Resource
                                     ->required(),
                             ])
                             ->columns(2)
-                            ->addActionLabel('Add Student')
+                            ->addActionLabel('Add Extra Student')
                             ->reorderable(false)
-                            ->cloneable(false),
-                    ])
+                            ->cloneable(false)
+                            ->defaultItems(0),
+                    ]),
             ]);
     }
 
