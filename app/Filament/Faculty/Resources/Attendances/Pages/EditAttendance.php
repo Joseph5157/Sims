@@ -2,7 +2,7 @@
 
 namespace App\Filament\Faculty\Resources\Attendances\Pages;
 
-use App\Filament\Faculty\Resources\Attendances\AttendanceResource;
+use App\Filament\Faculty\Resources\AttendanceResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 

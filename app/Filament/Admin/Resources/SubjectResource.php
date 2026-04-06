@@ -2,9 +2,9 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Resources\Subjects\Pages\CreateSubject;
-use App\Filament\Resources\Subjects\Pages\EditSubject;
-use App\Filament\Resources\Subjects\Pages\ListSubjects;
+use App\Filament\Admin\Resources\SubjectResource\Pages\CreateSubject;
+use App\Filament\Admin\Resources\SubjectResource\Pages\EditSubject;
+use App\Filament\Admin\Resources\SubjectResource\Pages\ListSubjects;
 use App\Models\Subject;
 use BackedEnum;
 use Filament\Forms;

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Faculty\Resources\AttendanceResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -34,6 +35,11 @@ class FacultyPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Faculty/Pages'), for: 'App\Filament\Faculty\Pages')
             ->pages([
                 Dashboard::class,
+                \App\Filament\Faculty\Pages\MonthlyAttendance::class,
+            ])
+            // Force registration of AttendanceResource
+            ->resources([
+                AttendanceResource::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Faculty/Widgets'), for: 'App\Filament\Faculty\Widgets')
             ->widgets([
