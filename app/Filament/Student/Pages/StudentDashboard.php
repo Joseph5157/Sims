@@ -25,7 +25,14 @@ class StudentDashboard extends Page
 
     public function getSubheading(): string|Htmlable
     {
-        return 'Here\'s your academic overview';
+        return 'Here is your academic overview';
+    }
+
+    public static function canAccess(): bool
+    {
+        $user = Auth::user();
+
+        return $user !== null && $user->hasRole('student');
     }
 
     public function getViewData(): array

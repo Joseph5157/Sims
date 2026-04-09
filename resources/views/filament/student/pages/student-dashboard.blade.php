@@ -92,17 +92,19 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-gray-200 dark:border-gray-700">
+                            <th class="py-3 px-4 text-left">Period</th>
                             <th class="py-3 px-4 text-left">Subject</th>
-                            <th class="py-3 px-4 text-left">Exam Type</th>
-                            <th class="py-3 px-4 text-left">Marks</th>
+                            <th class="py-3 px-4 text-left">Faculty</th>
+                            <th class="py-3 px-4 text-left">Room</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($recentGrades as $grade)
+                        @foreach($todayTimetable as $slot)
                             <tr class="border-b border-gray-200 dark:border-gray-700 last:border-0">
-                                <td class="py-1 pr-6">{{ $grade->subject->name }}</td>
-                                <td class="py-1 pr-6">{{ ucfirst(str_replace('_', ' ', $grade->exam_type)) }}</td>
-                                <td class="py-1 pr-6">{{ $grade->marks_obtained }} / {{ $grade->total_marks }}</td>
+                                <td class="py-1 pr-6">{{ $slot->period }}</td>
+                                <td class="py-1 pr-6">{{ $slot->subject?->name ?? 'N/A' }}</td>
+                                <td class="py-1 pr-6">{{ $slot->faculty?->user?->name ?? 'N/A' }}</td>
+                                <td class="py-1 pr-6">{{ $slot->room ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
