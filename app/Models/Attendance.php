@@ -11,11 +11,15 @@ class Attendance extends Model
 
     protected $fillable = [
         'student_id',
-        'subject_id',
-        'date',
+        'college_class_id',
+        'attendance_date',
         'status',
-        'remarks',
+        'notes',
         'marked_by',
+    ];
+
+    protected $casts = [
+        'attendance_date' => 'date',
     ];
 
     public function student()
@@ -23,9 +27,9 @@ class Attendance extends Model
         return $this->belongsTo(Student::class);
     }
 
-    public function subject()
+    public function collegeClass()
     {
-        return $this->belongsTo(Subject::class);
+        return $this->belongsTo(CollegeClass::class);
     }
 
     public function markedBy()

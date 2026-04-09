@@ -5,28 +5,15 @@ namespace App\Filament\Faculty\Pages;
 use App\Models\Attendance;
 use App\Models\CollegeClass;
 use App\Models\Student;
-use App\Models\Subject;
 use BackedEnum;
 use Carbon\Carbon;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
 use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
-class MonthlyAttendance extends Page implements HasTable
+class MonthlyAttendance extends Page
 {
-    use InteractsWithTable;
-
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Monthly Attendance';
     protected static string|UnitEnum|null $navigationGroup = 'Academic';
@@ -35,108 +22,135 @@ class MonthlyAttendance extends Page implements HasTable
     protected string $view = 'filament.faculty.pages.monthly-attendance';
 
     public ?int $college_class_id = null;
-    public ?int $subject_id = null;
     public string $month = '';
+    public array $classOptions = [];
+    public array $students = [];
+    public array $days = [];
+    public array $attendance = [];
 
     public function mount(): void
     {
         $this->month = now()->format('Y-m');
-    }
+        $this->classOptions = CollegeClass::orderBy('name')->pluck('name', 'id')->toArray();
 
-    public function form(Schema $schema): Schema
-    {
-        return $schema
-            ->schema([
-                Select::make('college_class_id')
-                    ->label('Select Class')
-                    ->options(CollegeClass::pluck('name', 'id'))
-                    ->required()
-                    ->live()
-                    ->afterStateUpdated(fn (Set $set): mixed => $set('subject_id', null)),
-
-                Select::make('subject_id')
-                    ->label('Select Subject')
-                    ->options(fn (Get $get) =>
-                        $get('college_class_id')
-                            ? Subject::where('college_class_id', $get('college_class_id'))->pluck('name', 'id')
-                            : []
-                    )
-                    ->required()
-                    ->live(),
-
-                DatePicker::make('month')
-                    ->label('Month')
-                    ->format('Y-m')
-                    ->displayFormat('F Y')           // ← This makes it "April 2026"
-                    ->default(now())
-                    ->live()
-                    ->native(false),
-            ]);
-    }
-
-    public function table(Table $table): Table
-    {
-        return $table
-            ->query(fn () => $this->college_class_id
-                ? Student::where('college_class_id', $this->college_class_id)
-                : Student::query()->where('id', 0)
-            )
-            ->columns([
-                TextColumn::make('roll_number')->label('Roll No')->sortable(),
-                TextColumn::make('user.name')->label('Student Name')->searchable(),
-            ])
-            ->headerActions([
-                Action::make('mark_entire_month')
-                    ->label('Mark All Students for Entire Month')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->form([
-                        Select::make('status')
-                            ->label('Status for every day of the month')
-                            ->options([
-                                'present' => '✅ Present',
-                                'absent'  => '❌ Absent',
-                                'late'    => '⚠️ Late',
-                            ])
-                            ->required()
-                            ->default('present'),
-                    ])
-                    ->action(function (array $data) {
-                        $this->markAttendanceForEntireMonth($data['status']);
-                    }),
-            ]);
-    }
-
-    private function markAttendanceForEntireMonth(string $status): void
-    {
-        if (!$this->college_class_id || !$this->subject_id) return;
-
-        $start = Carbon::parse($this->month)->startOfMonth();
-        $days = $start->daysInMonth;
-        $students = Student::where('college_class_id', $this->college_class_id)->get();
-
-        foreach ($students as $student) {
-            for ($i = 0; $i < $days; $i++) {
-                $date = $start->copy()->addDays($i);
-                Attendance::updateOrCreate(
-                    [
-                        'student_id' => $student->id,
-                        'subject_id' => $this->subject_id,
-                        'date'       => $date,
-                    ],
-                    [
-                        'status'    => $status,
-                        'marked_by' => Auth::id(),
-                        'remarks'   => null,
-                    ]
-                );
-            }
+        if (blank($this->college_class_id) && count($this->classOptions) > 0) {
+            $this->college_class_id = (int) array_key_first($this->classOptions);
         }
 
-        Notification::make()
-            ->title('✅ Success')
-            ->body('Attendance for the entire month has been saved for all students.')
-            ->success()
-            ->send();
+        $this->buildGrid();
+    }
+
+    public function updatedCollegeClassId(): void
+    {
+        $this->buildGrid();
+    }
+
+    public function updatedMonth(): void
+    {
+        $this->buildGrid();
+    }
+
+    public function selectMonth(string $month): void
+    {
+        $this->month = $month;
+        $this->buildGrid();
+    }
+
+    public function toggleAttendance(int $studentId, string $date): void
+    {
+        if (! $this->college_class_id) {
+            return;
+        }
+
+        $selectedDate = Carbon::parse($date)->startOfDay();
+        if ($selectedDate->isAfter(now()->startOfDay())) {
+            Notification::make()
+                ->title('Future dates are locked')
+                ->body('You can only mark attendance for today or past dates.')
+                ->warning()
+                ->send();
+            return;
+        }
+
+        $existing = Attendance::where('student_id', $studentId)
+            ->where('college_class_id', $this->college_class_id)
+            ->whereDate('attendance_date', $date)
+            ->first();
+
+        $nextStatus = ($existing?->status ?? 'absent') === 'present' ? 'absent' : 'present';
+
+        Attendance::updateOrCreate(
+            [
+                'student_id' => $studentId,
+                'college_class_id' => $this->college_class_id,
+                'attendance_date' => $date,
+            ],
+            [
+                'status' => $nextStatus,
+                'marked_by' => Auth::id(),
+                'notes' => $existing?->notes,
+            ]
+        );
+
+        $this->attendance[$studentId][$date] = $nextStatus;
+    }
+
+    public function getMonthTabs(): array
+    {
+        $base = Carbon::createFromFormat('Y-m', $this->month)->startOfMonth();
+
+        return [
+            $base->copy()->subMonth()->format('Y-m') => $base->copy()->subMonth()->format('M Y'),
+            $base->format('Y-m') => $base->format('M Y'),
+            $base->copy()->addMonth()->format('Y-m') => $base->copy()->addMonth()->format('M Y'),
+        ];
+    }
+
+    private function buildGrid(): void
+    {
+        if (! $this->college_class_id) {
+            $this->students = [];
+            $this->days = [];
+            $this->attendance = [];
+            return;
+        }
+
+        $start = Carbon::createFromFormat('Y-m', $this->month)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+
+        $this->days = [];
+        for ($i = 0; $i < $start->daysInMonth; $i++) {
+            $date = $start->copy()->addDays($i);
+            $this->days[] = [
+                'date' => $date->toDateString(),
+                'label' => $date->format('d'),
+            ];
+        }
+
+        $studentRecords = Student::where('college_class_id', $this->college_class_id)
+            ->with('user')
+            ->orderBy('roll_number')
+            ->get();
+
+        $this->students = $studentRecords->map(function (Student $student): array {
+            return [
+                'id' => $student->id,
+                'roll_number' => $student->roll_number,
+                'name' => $student->user?->name ?? 'Unknown',
+            ];
+        })->toArray();
+
+        $this->attendance = [];
+        $attendanceRecords = Attendance::where('college_class_id', $this->college_class_id)
+            ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()])
+            ->get(['student_id', 'attendance_date', 'status']);
+
+        foreach ($attendanceRecords as $record) {
+            $dateKey = $record->attendance_date instanceof Carbon
+                ? $record->attendance_date->toDateString()
+                : Carbon::parse($record->attendance_date)->toDateString();
+
+            $this->attendance[$record->student_id][$dateKey] = $record->status;
+        }
     }
 }

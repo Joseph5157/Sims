@@ -4,6 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\Department;
+use App\Models\CollegeClass;
+use App\Models\DisciplineCase;
+use App\Models\Attendance;
+use App\Models\Grade;
+use App\Models\Subject;
 
 class Student extends Model
 {
@@ -40,35 +47,6 @@ class Student extends Model
         return $this->hasMany(DisciplineCase::class);
     }
 
-    public function getAttendancePercentageAttribute($subjectId = null)
-    {
-        $query = $this->attendances();
-
-        if ($subjectId) {
-            $query->where('subject_id', $subjectId);
-        }
-
-        $total = $query->count();
-
-        if ($total === 0) {
-            return 0;
-        }
-
-        $present = $this->attendances()
-            ->when($subjectId, fn ($attendanceQuery) => $attendanceQuery->where('subject_id', $subjectId))
-            ->where('status', 'present')
-            ->count();
-
-        return round(($present / $total) * 100, 1);
-    }
-
-    public function getLowAttendanceSubjects()
-    {
-        return $this->subjects()->get()->filter(function ($subject) {
-            return $this->getAttendancePercentageAttribute($subject->id) < 75;
-        });
-    }
-
     public function attendances()
     {
         return $this->hasMany(Attendance::class);
@@ -81,6 +59,31 @@ class Student extends Model
 
     public function subjects()
     {
-        return $this->hasManyThrough(Subject::class, CollegeClass::class, 'id', 'college_class_id');
+        return $this->hasManyThrough(
+            Subject::class,
+            CollegeClass::class,
+            'id',
+            'college_class_id',
+            'college_class_id',
+            'id'
+        );
+    }
+
+    public function getAttendancePercentage(): float
+    {
+        $attendances = $this->attendances();
+
+        $total = $attendances->count();
+        if ($total === 0) {
+            return 0;
+        }
+
+        $present = $attendances->where('status', 'present')->count();
+        return round(($present / $total) * 100, 1);
+    }
+
+    public function getLowAttendanceSubjects()
+    {
+        return collect();
     }
 }

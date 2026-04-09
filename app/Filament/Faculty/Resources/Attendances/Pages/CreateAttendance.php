@@ -22,12 +22,12 @@ class CreateAttendance extends CreateRecord
                 $record = Attendance::updateOrCreate(
                     [
                         'student_id' => $studentData['student_id'],
-                        'subject_id' => $data['subject_id'],
-                        'date' => $data['date'],
+                        'college_class_id' => $data['college_class_id'],
+                        'attendance_date' => $data['attendance_date'],
                     ],
                     [
                         'status' => $studentData['status'],
-                        'remarks' => $studentData['remarks'] ?? null,
+                        'notes' => $studentData['notes'] ?? null,
                         'marked_by' => $facultyId,
                     ]
                 );

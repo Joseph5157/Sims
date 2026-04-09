@@ -6,7 +6,6 @@ use App\Exports\AttendanceExporter;
 use App\Models\Attendance;
 use App\Models\CollegeClass;
 use App\Models\Student;
-use App\Models\Subject;
 use BackedEnum;
 use UnitEnum;
 use Filament\Actions\Action;
@@ -58,13 +57,10 @@ class AttendanceResource extends Resource
                         $classId = $get('college_class_id');
 
                         if (! $classId) {
-                            $set('subject_id', null);
                             $set('students', []);
 
                             return;
                         }
-
-                        $set('subject_id', null);
 
                         $students = Student::where('college_class_id', $classId)
                             ->with('user')
@@ -73,7 +69,7 @@ class AttendanceResource extends Resource
                                 return [
                                     'student_id' => $student->id,
                                     'status' => 'present',
-                                    'remarks' => null,
+                                    'notes' => null,
                                 ];
                             })
                             ->toArray();
@@ -81,19 +77,7 @@ class AttendanceResource extends Resource
                         $set('students', $students);
                     }),
 
-                Select::make('subject_id')
-                    ->label('Select Subject')
-                    ->options(function (Get $get) {
-                        $classId = $get('college_class_id');
-
-                        return $classId
-                            ? Subject::where('college_class_id', $classId)->pluck('name', 'id')
-                            : [];
-                    })
-                    ->required()
-                    ->live(),
-
-                DatePicker::make('date')
+                DatePicker::make('attendance_date')
                     ->required()
                     ->default(now())
                     ->maxDate(now()),
@@ -126,12 +110,13 @@ class AttendanceResource extends Resource
                                         'present' => 'Present',
                                         'absent' => 'Absent',
                                         'late' => 'Late',
+                                        'excused' => 'Excused',
                                     ])
                                     ->default('present')
                                     ->required(),
 
-                                Textarea::make('remarks')
-                                    ->label('Remarks')
+                                Textarea::make('notes')
+                                    ->label('Notes')
                                     ->rows(1)
                                     ->placeholder('Optional notes...'),
                             ])
@@ -199,11 +184,11 @@ class AttendanceResource extends Resource
                     ->label('Student Name')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('subject.name')
-                    ->label('Subject')
+                Tables\Columns\TextColumn::make('collegeClass.name')
+                    ->label('Class')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('date')
+                Tables\Columns\TextColumn::make('attendance_date')
                     ->date('d M Y')
                     ->sortable(),
 
@@ -212,9 +197,10 @@ class AttendanceResource extends Resource
                         'success' => 'present',
                         'danger' => 'absent',
                         'warning' => 'late',
+                        'info' => 'excused',
                     ]),
             ])
-            ->defaultSort('date', 'desc')
+            ->defaultSort('attendance_date', 'desc')
             ->headerActions([
                 ExportAction::make()
                     ->label('Export Today\'s Attendance')
