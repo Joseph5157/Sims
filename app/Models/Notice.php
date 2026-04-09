@@ -17,6 +17,10 @@ class Notice extends Model
         'expires_at',
     ];
 
+    protected $casts = [
+        'expires_at' => 'datetime',
+    ];
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -30,5 +34,10 @@ class Notice extends Model
     public function collegeClass()
     {
         return $this->belongsTo(CollegeClass::class, 'college_class_id');
+    }
+
+    public function getExpiryDateAttribute()
+    {
+        return $this->expires_at;
     }
 }

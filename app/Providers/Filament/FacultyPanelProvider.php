@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Faculty\Pages\FacultyTimetable;
 use App\Filament\Faculty\Resources\AttendanceResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -35,6 +36,7 @@ class FacultyPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Faculty/Pages'), for: 'App\Filament\Faculty\Pages')
             ->pages([
                 Dashboard::class,
+                FacultyTimetable::class,
             ])
             // Force registration of AttendanceResource
             ->resources([

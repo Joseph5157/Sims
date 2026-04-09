@@ -34,6 +34,9 @@ class AttendanceExporter extends Exporter
             ExportColumn::make('status')
                 ->label('Status')
                 ->formatStateUsing(fn (?string $state): string => (string) $state),
+            ExportColumn::make('notes')
+                ->label('Notes')
+                ->formatStateUsing(fn (?string $state): string => (string) $state),
         ];
     }
 

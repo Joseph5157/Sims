@@ -6,6 +6,8 @@ use App\Models\Notice;
 use BackedEnum;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
+use App\Models\TimetableSlot;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class StudentDashboard extends Page
@@ -39,7 +41,13 @@ class StudentDashboard extends Page
                 ->latest()
                 ->take(5)
                 ->get(),
-            'todayTimetable' => [], // We'll fill this in later
+            'todayTimetable' => $student
+                ? TimetableSlot::where('college_class_id', $student->college_class_id)
+                    ->where('day', strtolower(Carbon::now()->format('l')))
+                    ->with(['subject', 'faculty.user'])
+                    ->orderBy('period')
+                    ->get()
+                : collect(),
         ];
     }
 }
