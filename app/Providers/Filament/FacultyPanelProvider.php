@@ -35,7 +35,6 @@ class FacultyPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Faculty/Pages'), for: 'App\Filament\Faculty\Pages')
             ->pages([
                 Dashboard::class,
-                \App\Filament\Faculty\Pages\MonthlyAttendance::class,
             ])
             // Force registration of AttendanceResource
             ->resources([

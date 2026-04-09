@@ -49,11 +49,10 @@
 - Rebuilt Attendance system to **class-only** (removed subject_id)
 - New migration: `2026_04_07_000001_update_attendances_for_class_only.php`
 - Updated files:
-  - `app/Filament/Faculty/Pages/MonthlyAttendance.php`
-  - `resources/views/filament/faculty/pages/monthly-attendance.blade.php`
   - `app/Models/Attendance.php`
   - `app/Models/Student.php`
   - `app/Filament/Faculty/Resources/AttendanceResource.php`
+- Deleted MonthlyAttendance page (can be built later)
 - Next step: Run migration + test the grid
 
 ## Useful References
