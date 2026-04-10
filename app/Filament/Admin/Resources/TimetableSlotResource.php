@@ -7,6 +7,10 @@ use App\Filament\Admin\Resources\TimetableSlotResource\Pages\EditTimetableSlot;
 use App\Filament\Admin\Resources\TimetableSlotResource\Pages\ListTimetableSlots;
 use App\Models\TimetableSlot;
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -45,6 +49,7 @@ class TimetableSlotResource extends Resource
                         if ($collegeClassId) {
                             return $query->where('college_class_id', $collegeClassId);
                         }
+
                         return $query;
                     })
                     ->required()
@@ -52,7 +57,8 @@ class TimetableSlotResource extends Resource
                     ->preload(),
 
                 Forms\Components\Select::make('faculty_id')
-                    ->relationship('faculty', 'user.name')
+                    ->relationship('faculty', 'employee_id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->user?->name ?? $record->employee_id)
                     ->required()
                     ->searchable()
                     ->preload(),
@@ -122,12 +128,12 @@ class TimetableSlotResource extends Resource
                     ]),
             ])
             ->actions([
-                \Filament\Actions\EditAction::make(),
-                \Filament\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

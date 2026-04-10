@@ -3,24 +3,27 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\CourseResource\Pages;
-use App\Filament\Admin\Resources\CourseResource\RelationManagers;
 use App\Models\Course;
+use App\Models\Faculty;
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use Filament\Tables\Table;
 
 class CourseResource extends Resource
 {
     protected static ?string $model = Course::class;
 
     // Must match Filament v4's HasNavigation trait property type.
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::BookOpen;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::BookOpen;
 
     public static function form(Schema $schema): Schema
     {
@@ -45,19 +48,19 @@ class CourseResource extends Resource
                     ->label('Class'),
                 Forms\Components\Select::make('faculty_id')
                     ->relationship('faculty', 'employee_id')
-                    ->getOptionLabelFromRecordUsing(fn (\App\Models\Faculty $record): string => $record->user?->name ?? $record->employee_id)
+                    ->getOptionLabelFromRecordUsing(fn (Faculty $record): string => $record->user?->name ?? $record->employee_id)
                     ->required()
                     ->searchable()
                     ->preload()
                     ->label('Faculty'),
                 SpatieMediaLibraryFileUpload::make('thumbnail')
-                    ->disk('r2')
+                    ->disk('public')
                     ->collection('course-thumbnails')
                     ->image()
                     ->maxSize(1024)
                     ->label('Course Thumbnail'),
                 SpatieMediaLibraryFileUpload::make('materials')
-                    ->disk('r2')
+                    ->disk('public')
                     ->collection('course-materials')
                     ->multiple()
                     ->enableDownload()
@@ -96,11 +99,11 @@ class CourseResource extends Resource
                 //
             ])
             ->actions([
-                \Filament\Actions\EditAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

@@ -7,6 +7,10 @@ use App\Filament\Admin\Resources\DisciplineCaseResource\Pages\EditDisciplineCase
 use App\Filament\Admin\Resources\DisciplineCaseResource\Pages\ListDisciplineCases;
 use App\Models\DisciplineCase;
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -30,13 +34,15 @@ class DisciplineCaseResource extends Resource
         return $schema
             ->schema([
                 Forms\Components\Select::make('student_id')
-                    ->relationship('student', 'user.name')
+                    ->relationship('student', 'roll_number')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->user?->name ?? $record->roll_number)
                     ->required()
                     ->searchable()
                     ->preload(),
 
                 Forms\Components\Select::make('faculty_id')
-                    ->relationship('faculty', 'user.name')
+                    ->relationship('faculty', 'employee_id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->user?->name ?? $record->employee_id)
                     ->required()
                     ->searchable()
                     ->preload(),
@@ -131,12 +137,12 @@ class DisciplineCaseResource extends Resource
                     ]),
             ])
             ->actions([
-                \Filament\Actions\EditAction::make(),
-                \Filament\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

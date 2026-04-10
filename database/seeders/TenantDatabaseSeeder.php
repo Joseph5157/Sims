@@ -27,11 +27,15 @@ class TenantDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        Artisan::call('shield:generate', [
-            '--all' => true,
-            '--panel' => 'admin',
-            '--option' => 'permissions',
-        ]);
+        try {
+            Artisan::call('shield:generate', [
+                '--all' => true,
+                '--panel' => 'admin',
+                '--option' => 'permissions',
+            ]);
+        } catch (\Exception $e) {
+            $this->command->warn('Shield generation skipped: '.$e->getMessage());
+        }
 
         $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $facultyRole = Role::firstOrCreate(['name' => 'faculty', 'guard_name' => 'web']);
@@ -193,7 +197,7 @@ class TenantDatabaseSeeder extends Seeder
                     'department_id' => $deptId,
                     'college_class_id' => $classId,
                     'date_of_birth' => '2000-01-01',
-                    'phone' => "123-456-78" . str_pad((string) $i, 2, '0', STR_PAD_LEFT),
+                    'phone' => '123-456-78'.str_pad((string) $i, 2, '0', STR_PAD_LEFT),
                     'address' => "Student Address {$i}",
                     'admission_year' => 2023,
                 ]

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Console\Commands\CreateTenant;
 use App\Policies\PermissionPolicy;
 use App\Policies\RolePolicy;
 use Illuminate\Support\Facades\Gate;
@@ -16,7 +17,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                CreateTenant::class,
+            ]);
+        }
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CreateAttendance extends CreateRecord
 {
@@ -17,6 +18,12 @@ class CreateAttendance extends CreateRecord
         return DB::transaction(function () use ($data) {
             $facultyId = Auth::id();
             $createdRecords = [];
+
+            if (empty($data['students'])) {
+                throw ValidationException::withMessages([
+                    'students' => 'At least one student is required.',
+                ]);
+            }
 
             foreach ($data['students'] as $studentData) {
                 $record = Attendance::updateOrCreate(
@@ -35,7 +42,7 @@ class CreateAttendance extends CreateRecord
                 $createdRecords[] = $record;
             }
 
-            return $createdRecords[0] ?? new Attendance();
+            return $createdRecords[0];
         });
     }
 

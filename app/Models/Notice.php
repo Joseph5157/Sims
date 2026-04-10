@@ -31,11 +31,6 @@ class Notice extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function collegeClass()
-    {
-        return $this->belongsTo(CollegeClass::class, 'college_class_id');
-    }
-
     public function getExpiryDateAttribute()
     {
         return $this->expires_at;
