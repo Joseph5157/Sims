@@ -12,7 +12,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Auth;
 
 class DisciplineCaseResource extends Resource
 {
@@ -54,34 +53,29 @@ class DisciplineCaseResource extends Resource
                 Forms\Components\Select::make('severity')
                     ->required()
                     ->options([
-                        'low' => 'Low',
-                        'medium' => 'Medium',
-                        'high' => 'High',
+                        'Low' => 'Low',
+                        'Medium' => 'Medium',
+                        'High' => 'High',
+                        'Critical' => 'Critical',
                     ]),
 
                 Forms\Components\FileUpload::make('attachment')
                     ->optional(),
 
                 Forms\Components\Select::make('status')
-                    ->default('open')
+                    ->default('Pending')
                     ->options([
-                        'open' => 'Open',
-                        'under_review' => 'Under Review',
-                        'resolved' => 'Resolved',
+                        'Pending' => 'Pending',
+                        'Under Review' => 'Under Review',
+                        'Resolved' => 'Resolved',
                     ]),
 
                 Forms\Components\Hidden::make('admin_id'),
 
                 Forms\Components\DatePicker::make('resolved_at')
                     ->optional()
-                    ->visible(fn (callable $get) => $get('status') === 'resolved'),
+                    ->visible(fn (callable $get) => $get('status') === 'Resolved'),
             ]);
-    }
-
-    protected function mutateFormDataBeforeCreate(array $data): array
-    {
-        $data['admin_id'] = Auth::id();
-        return $data;
     }
 
     public static function table(Table $table): Table
@@ -105,15 +99,17 @@ class DisciplineCaseResource extends Resource
                 Tables\Columns\TextColumn::make('severity')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'low' => 'success',
-                        'medium' => 'warning',
-                        'high' => 'danger',
+                        'Low' => 'success',
+                        'Medium' => 'warning',
+                        'High' => 'danger',
+                        'Critical' => 'danger',
+                        default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                    ->formatStateUsing(fn (string $state): string => $state),
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => str_replace('_', ' ', ucwords($state))),
+                    ->formatStateUsing(fn (string $state): string => $state),
 
                 Tables\Columns\TextColumn::make('resolved_at')
                     ->date()
@@ -122,15 +118,16 @@ class DisciplineCaseResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('severity')
                     ->options([
-                        'low' => 'Low',
-                        'medium' => 'Medium',
-                        'high' => 'High',
+                        'Low' => 'Low',
+                        'Medium' => 'Medium',
+                        'High' => 'High',
+                        'Critical' => 'Critical',
                     ]),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'open' => 'Open',
-                        'under_review' => 'Under Review',
-                        'resolved' => 'Resolved',
+                        'Pending' => 'Pending',
+                        'Under Review' => 'Under Review',
+                        'Resolved' => 'Resolved',
                     ]),
             ])
             ->actions([

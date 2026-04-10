@@ -15,7 +15,7 @@ use Filament\Tables\Table;
 
 class DepartmentResource extends Resource
 {
-    protected static ?string $model = Department::class;
+    protected static ?string $model = \App\Models\Department::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
 

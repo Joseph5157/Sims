@@ -32,7 +32,7 @@ class StudentDashboard extends Page
     {
         $user = Auth::user();
 
-        return $user !== null && $user->hasRole('student');
+        return $user !== null && method_exists($user, 'hasRole') && $user->hasRole('student');
     }
 
     public function getViewData(): array
@@ -50,7 +50,7 @@ class StudentDashboard extends Page
                 ->get(),
             'todayTimetable' => $student
                 ? TimetableSlot::where('college_class_id', $student->college_class_id)
-                    ->where('day', strtolower(Carbon::now()->format('l')))
+                    ->where('day', Carbon::now()->format('l'))
                     ->with(['subject', 'faculty.user'])
                     ->orderBy('period')
                     ->get()

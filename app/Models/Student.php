@@ -11,10 +11,13 @@ use App\Models\DisciplineCase;
 use App\Models\Attendance;
 use App\Models\Grade;
 use App\Models\Subject;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Student extends Model
+class Student extends Model implements HasMedia
 {
     use HasFactory;
+    use InteractsWithMedia;
 
     protected $fillable = [
         'user_id',

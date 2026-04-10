@@ -2,9 +2,8 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\StudentResource\Pages\CreateStudent;
-use App\Filament\Admin\Resources\StudentResource\Pages\EditStudent;
-use App\Filament\Admin\Resources\StudentResource\Pages\ListStudents;
+use App\Filament\Admin\Resources\StudentResource\Pages;
+use App\Filament\Admin\Resources\StudentResource\RelationManagers;
 use App\Models\Student;
 use BackedEnum;
 use Filament\Forms;
@@ -12,19 +11,18 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use App\Models\CollegeClass;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 
 class StudentResource extends Resource
 {
     protected static ?string $model = Student::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-users';
-
-    protected static string|\UnitEnum|null $navigationGroup = 'Academic';
-
-    protected static ?int $navigationSort = 4;
-
-    protected static ?string $recordTitleAttribute = 'roll_number';
+    // Must match Filament v4's HasNavigation trait property type.
+    protected static string | BackedEnum | null $navigationIcon = Heroicon::Users;
 
     public static function form(Schema $schema): Schema
     {
@@ -34,50 +32,39 @@ class StudentResource extends Resource
                     ->relationship('user', 'name')
                     ->required()
                     ->searchable()
-                    ->preload(),
-
-                Forms\Components\Select::make('department_id')
-                    ->relationship('department', 'name')
-                    ->required()
-                    ->searchable()
                     ->preload()
-                    ->live()
-                    ->afterStateUpdated(function (callable $set) {
-                        $set('college_class_id', null);
-                    }),
-
-                Forms\Components\Select::make('college_class_id')
-                    ->relationship('collegeClass', 'name', function ($query, callable $get) {
-                        $departmentId = $get('department_id');
-                        if ($departmentId) {
-                            return $query->where('department_id', $departmentId);
-                        }
-                        return $query;
-                    })
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->label('Class'),
-
+                    ->label('User'),
                 Forms\Components\TextInput::make('roll_number')
                     ->required()
                     ->unique(ignoreRecord: true)
-                    ->maxLength(20),
-
+                    ->maxLength(255),
+                Forms\Components\Select::make('department_id')
+                    ->relationship('department', 'name')
+                    ->required(),
+                Forms\Components\Select::make('college_class_id')
+                    ->relationship('collegeClass', 'name')
+                    ->required(),
                 Forms\Components\DatePicker::make('date_of_birth')
-                    ->optional(),
-
+                    ->nullable(),
                 Forms\Components\TextInput::make('phone')
-                    ->optional()
-                    ->maxLength(15),
-
+                    ->tel()
+                    ->nullable()
+                    ->maxLength(255),
                 Forms\Components\Textarea::make('address')
-                    ->optional()
-                    ->rows(3),
-
+                    ->nullable()
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('admission_year')
+                    ->required()
                     ->numeric()
-                    ->optional(),
+                    ->minValue(2000)
+                    ->maxValue(2100)
+                    ->helperText('Start year (e.g. 2026).'),
+                SpatieMediaLibraryFileUpload::make('photo')
+                    ->disk('r2')
+                    ->collection('student-photos')
+                    ->image()
+                    ->maxSize(1024)
+                    ->label('Student Photo'),
             ]);
     }
 
@@ -86,32 +73,38 @@ class StudentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('roll_number')
-                    ->searchable()
-                    ->sortable(),
-
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Student Name')
-                    ->searchable()
-                    ->sortable(),
-
+                    ->label('Name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('user.email')
+                    ->label('Email')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('phone')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('department.name')
-                    ->label('Department')
-                    ->sortable(),
-
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('collegeClass.name')
-                    ->label('Class')
-                    ->sortable(),
-
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('admission_year')
                     ->sortable(),
+                SpatieMediaLibraryImageColumn::make('photo')
+                    ->collection('student-photos')
+                    ->label('Photo'),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('department_id')
-                    ->relationship('department', 'name'),
+                //
             ])
             ->actions([
                 \Filament\Actions\EditAction::make(),
-                \Filament\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([
@@ -130,9 +123,9 @@ class StudentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListStudents::route('/'),
-            'create' => CreateStudent::route('/create'),
-            'edit' => EditStudent::route('/{record}/edit'),
+            'index' => Pages\ListStudents::route('/'),
+            'create' => Pages\CreateStudent::route('/create'),
+            'edit' => Pages\EditStudent::route('/{record}/edit'),
         ];
     }
 }

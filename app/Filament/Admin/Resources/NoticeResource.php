@@ -12,7 +12,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class NoticeResource extends Resource
@@ -49,12 +48,6 @@ class NoticeResource extends Resource
                 Forms\Components\DatePicker::make('expires_at')
                     ->optional(),
             ]);
-    }
-
-    protected function mutateFormDataBeforeCreate(array $data): array
-    {
-        $data['created_by'] = Auth::id();
-        return $data;
     }
 
     public static function table(Table $table): Table

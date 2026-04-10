@@ -8,9 +8,13 @@
     "require": {
         "php": "^8.3",
         "althinect/filament-spatie-roles-permissions": "*",
+        "bezhansalleh/filament-shield": "*",
+        "filament/spatie-laravel-media-library-plugin": "4.9.3",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
-        "spatie/laravel-permission": "*"
+        "spatie/laravel-medialibrary": "*",
+        "spatie/laravel-permission": "*",
+        "stancl/tenancy": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

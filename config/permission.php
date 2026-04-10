@@ -197,6 +197,9 @@ return [
          * file. Using 'default' here means to use the `default` set in cache.php.
          */
 
-        'store' => 'default',
+        // In multi-database tenancy, roles/permissions are tenant-scoped.
+        // Using a persistent shared cache store risks cross-tenant cache bleed.
+        // Array store is per-request/process and is safe until we add taggable, tenant-scoped caching.
+        'store' => 'array',
     ],
 ];
