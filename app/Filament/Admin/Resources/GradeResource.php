@@ -30,7 +30,8 @@ class GradeResource extends Resource
         return $schema
             ->schema([
                 Forms\Components\Select::make('student_id')
-                    ->relationship('student', 'user.name')
+                    ->relationship('student', 'id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => optional($record->user)->name ?? 'Student ' . $record->id)
                     ->required()
                     ->searchable()
                     ->preload(),
