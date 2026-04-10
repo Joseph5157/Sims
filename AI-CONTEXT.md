@@ -36,6 +36,7 @@
   - Custom Blade view + month tabs (Dec 2024, Jan 2025, Feb 2025 style)
 - Student, Department, College Class resources
 - Role-based panels (Admin full access, Faculty can mark attendance, Student view-only)
+- Student Dashboard with authorization and timetable display
 
 ### In Progress / Planned
 - Timetable / Class Schedule
@@ -55,6 +56,11 @@
 - Deleted MonthlyAttendance page (can be built later)
 - Next step: Run migration + test the grid
 
+## Recent Updates (April 9, 2026)
+- Fixed Student Dashboard authorization with `canAccess()` method to ensure only authenticated students with valid profiles can access
+- Corrected "Today's Timetable" section in student dashboard template to display timetable data (Period, Subject, Faculty, Room) instead of grades
+- Removed broken `attendances()` relationship from `Subject.php` after the April 2026 migration
+
 ## Useful References
 - YouTube Tutorial: “Laravel Filament Tutorial for Beginners | Build a mini Students Management System”  
   Link: https://www.youtube.com/watch?v=fkXpGwp3opA
@@ -68,4 +74,4 @@
 4. Update this AI-CONTEXT.md after every major change.
 5. Prefer clean, beginner-friendly step-by-step guidance.
 
-**Last Updated**: April 08, 2026 (after Attendance rebuild + YouTube tutorial reference)
+**Last Updated**: April 9, 2026 (after Student Dashboard fixes)
