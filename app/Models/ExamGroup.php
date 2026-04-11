@@ -7,37 +7,31 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Subject extends Model
+class ExamGroup extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'name',
-        'code',
-        'department_id',
         'college_class_id',
-        'credits',
-        'description',
+        'exam_type',
+        'start_date',
+        'end_date',
+        'is_published',
     ];
 
-    public function department(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(Department::class);
+        return [
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'is_published' => 'boolean',
+        ];
     }
 
     public function collegeClass(): BelongsTo
     {
         return $this->belongsTo(CollegeClass::class);
-    }
-
-    public function grades(): HasMany
-    {
-        return $this->hasMany(Grade::class);
-    }
-
-    public function timetableSlots(): HasMany
-    {
-        return $this->hasMany(TimetableSlot::class);
     }
 
     public function exams(): HasMany

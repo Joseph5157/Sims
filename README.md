@@ -41,6 +41,42 @@ php artisan boost:install
 
 Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
 
+## Local Setup
+
+For this project, the most common local URLs are:
+
+- Central app: `http://laravel-new-college-portal.test`
+- Tenant admin: `http://school1.test/admin/login`
+- Tenant faculty: `http://school1.test/faculty/login`
+- Tenant student: `http://school1.test/student/login`
+
+Recommended startup flow:
+
+1. Start Herd:
+   ```bash
+   herd start
+   ```
+
+Note: Filament panels rely on the compiled Vite manifest for custom Tailwind styles. After any changes to `resources/css/app.css` or Tailwind usage in Blade/PHP views, run:
+```bash
+npm run build
+```
+The Filament core assets are already pre-compiled; this build step is only for the project’s custom CSS.
+2. Clear stale caches if anything looks off:
+   ```bash
+   php artisan optimize:clear
+   ```
+3. If a tenant is missing, provision it:
+   ```bash
+   php artisan tenant:create --name="School Name" --domain="school1.test"
+   ```
+4. If the tenant database needs to be rebuilt, run:
+   ```bash
+   php artisan tenants:migrate --tenants=school1
+   php artisan tenants:seed --class=TenantDatabaseSeeder --tenants=school1
+   ```
+5. If you see `419 Page Expired`, clear browser site data for `school1.test` and reload the tenant login page.
+
 ## Contributing
 
 Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).

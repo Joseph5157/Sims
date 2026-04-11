@@ -107,3 +107,4 @@ Use this order when you start the project fresh:
 - These URLs and accounts are for your local environment only.
 - If `school1.test` is not yet linked in Herd, you may need to link or provision the tenant domain before using it.
 - The tenant URLs assume the tenant `school1.test` has been created and provisioned.
+- All tenant panels share the same `school1.test` session. If you switch between roles, log out first or open the next panel in a private/incognito window to avoid `403 Forbidden` from the wrong authenticated user.

@@ -2,19 +2,20 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\InitializeTenancyForLivewireRequests;
 use Illuminate\Contracts\Http\Kernel;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\PermissionRegistrar;
 use Stancl\JobPipeline\JobPipeline;
 use Stancl\Tenancy\Events;
-use Stancl\Tenancy\Listeners;
-use Stancl\Tenancy\Middleware;
-use Spatie\Permission\PermissionRegistrar;
-use Stancl\Tenancy\Events\TenantCreated;
 use Stancl\Tenancy\Events\TenancyEnded;
 use Stancl\Tenancy\Events\TenancyInitialized;
+use Stancl\Tenancy\Events\TenantCreated;
 use Stancl\Tenancy\Jobs\CreateDatabase;
+use Stancl\Tenancy\Listeners;
+use Stancl\Tenancy\Middleware;
 
 class TenancyServiceProvider extends ServiceProvider
 {
@@ -30,6 +31,7 @@ class TenancyServiceProvider extends ServiceProvider
         $this->bootEvents();
         $this->mapRoutes();
         $this->makeTenancyMiddlewareHighestPriority();
+        $this->ensureLivewireRequestsAreTenantAware();
 
         // Spatie Permission caches permissions by a single cache key.
         // In multi-database tenancy, we must clear that cache when tenancy
@@ -64,7 +66,7 @@ class TenancyServiceProvider extends ServiceProvider
     {
         return [
             Events\CreatingTenant::class => [],
-            Events\TenantCreated::class => [],
+            TenantCreated::class => [],
             Events\SavingTenant::class => [],
             Events\TenantSaved::class => [],
             Events\UpdatingTenant::class => [],
@@ -88,11 +90,11 @@ class TenancyServiceProvider extends ServiceProvider
             Events\DatabaseDeleted::class => [],
 
             Events\InitializingTenancy::class => [],
-            Events\TenancyInitialized::class => [
+            TenancyInitialized::class => [
                 Listeners\BootstrapTenancy::class,
             ],
             Events\EndingTenancy::class => [],
-            Events\TenancyEnded::class => [
+            TenancyEnded::class => [
                 Listeners\RevertToCentralContext::class,
             ],
             Events\BootstrappingTenancy::class => [],
@@ -115,6 +117,7 @@ class TenancyServiceProvider extends ServiceProvider
     protected function makeTenancyMiddlewareHighestPriority(): void
     {
         $tenancyMiddleware = [
+            InitializeTenancyForLivewireRequests::class,
             Middleware\PreventAccessFromCentralDomains::class,
             Middleware\InitializeTenancyByDomain::class,
             Middleware\InitializeTenancyBySubdomain::class,
@@ -126,5 +129,28 @@ class TenancyServiceProvider extends ServiceProvider
         foreach (array_reverse($tenancyMiddleware) as $middleware) {
             $this->app[Kernel::class]->prependToMiddlewarePriority($middleware);
         }
+    }
+
+    protected function ensureLivewireRequestsAreTenantAware(): void
+    {
+        if (! $this->app->bound('livewire')) {
+            return;
+        }
+
+        $this->app->booted(function (): void {
+            foreach (Route::getRoutes()->getRoutes() as $route) {
+                $name = $route->getName();
+
+                if (! is_string($name) || $name === '') {
+                    continue;
+                }
+
+                if (! str($name)->contains('livewire.')) {
+                    continue;
+                }
+
+                $route->middleware(InitializeTenancyForLivewireRequests::class);
+            }
+        });
     }
 }

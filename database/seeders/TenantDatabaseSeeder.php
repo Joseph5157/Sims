@@ -5,8 +5,12 @@ namespace Database\Seeders;
 use App\Models\Attendance;
 use App\Models\CollegeClass;
 use App\Models\Department;
+use App\Models\Exam;
+use App\Models\ExamGroup;
+use App\Models\ExamScore;
 use App\Models\Faculty;
 use App\Models\Grade;
+use App\Models\GradingLevel;
 use App\Models\Guardian;
 use App\Models\Notice;
 use App\Models\Student;
@@ -265,6 +269,49 @@ class TenantDatabaseSeeder extends Seeder
             ]
         );
 
+        // Grading Levels (global defaults - no class_id)
+        GradingLevel::firstOrCreate(
+            ['name' => 'A+', 'college_class_id' => null],
+            ['min_score' => 90, 'max_score' => 100, 'grade_point' => 4.0]
+        );
+
+        GradingLevel::firstOrCreate(
+            ['name' => 'A', 'college_class_id' => null],
+            ['min_score' => 80, 'max_score' => 89.99, 'grade_point' => 3.7]
+        );
+
+        GradingLevel::firstOrCreate(
+            ['name' => 'B+', 'college_class_id' => null],
+            ['min_score' => 70, 'max_score' => 79.99, 'grade_point' => 3.3]
+        );
+
+        GradingLevel::firstOrCreate(
+            ['name' => 'B', 'college_class_id' => null],
+            ['min_score' => 60, 'max_score' => 69.99, 'grade_point' => 3.0]
+        );
+
+        GradingLevel::firstOrCreate(
+            ['name' => 'C', 'college_class_id' => null],
+            ['min_score' => 50, 'max_score' => 59.99, 'grade_point' => 2.0]
+        );
+
+        GradingLevel::firstOrCreate(
+            ['name' => 'F', 'college_class_id' => null],
+            ['min_score' => 0, 'max_score' => 49.99, 'grade_point' => 0.0]
+        );
+
+        // Exam Group
+        $midterm = ExamGroup::firstOrCreate(
+            ['name' => 'Midterm 2026', 'college_class_id' => $csYear1->id],
+            ['exam_type' => 'marks', 'start_date' => '2026-03-01', 'end_date' => '2026-03-15', 'is_published' => true]
+        );
+
+        // Exam under that group
+        $exam = Exam::firstOrCreate(
+            ['exam_group_id' => $midterm->id, 'subject_id' => $progFund->id],
+            ['date' => '2026-03-05', 'maximum_marks' => 100, 'minimum_marks' => 35, 'weightage' => 1]
+        );
+
         // Grades + attendance + notices for the first student
         $firstStudent = Student::where('roll_number', 'STU001')->first();
 
@@ -306,6 +353,11 @@ class TenantDatabaseSeeder extends Seeder
                     'total_marks' => 20,
                     'entered_by' => $adminUser->id,
                 ]
+            );
+
+            ExamScore::firstOrCreate(
+                ['exam_id' => $exam->id, 'student_id' => $firstStudent->id],
+                ['marks_obtained' => 78, 'absent' => false, 'remarks' => 'Good performance', 'entered_by' => $adminUser->id]
             );
         }
 
