@@ -4,13 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
-use App\Models\Department;
-use App\Models\CollegeClass;
-use App\Models\DisciplineCase;
-use App\Models\Attendance;
-use App\Models\Grade;
-use App\Models\Subject;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -60,6 +53,11 @@ class Student extends Model implements HasMedia
         return $this->hasMany(Grade::class);
     }
 
+    public function guardians()
+    {
+        return $this->hasMany(Guardian::class);
+    }
+
     public function subjects()
     {
         return $this->hasManyThrough(
@@ -82,6 +80,7 @@ class Student extends Model implements HasMedia
         }
 
         $present = $attendances->where('status', 'present')->count();
+
         return round(($present / $total) * 100, 1);
     }
 

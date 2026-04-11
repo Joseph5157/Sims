@@ -46,6 +46,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia
             'admin' => $this->hasAnyRole(['admin', 'faculty']),
             'faculty' => $this->hasRole('faculty'),
             'student' => $this->hasRole('student'),
+            'parent' => $this->hasRole('parent'),
             'superadmin' => $this->is_super_admin === true,
             default => false,
         };
@@ -69,6 +70,11 @@ class User extends Authenticatable implements FilamentUser, HasMedia
     public function facultyProfile(): HasOne
     {
         return $this->hasOne(Faculty::class);
+    }
+
+    public function guardianProfile(): HasOne
+    {
+        return $this->hasOne(Guardian::class);
     }
 
     public function notices(): HasMany
