@@ -7,6 +7,7 @@ use App\Models\CollegeClass;
 use App\Models\Department;
 use App\Models\Faculty;
 use App\Models\Grade;
+use App\Models\Guardian;
 use App\Models\Notice;
 use App\Models\Student;
 use App\Models\Subject;
@@ -190,7 +191,7 @@ class TenantDatabaseSeeder extends Seeder
             $classId = $i <= 3 ? $csYear1->id : $mathYear1->id;
             $deptId = $i <= 3 ? $csDept->id : $mathDept->id;
 
-            Student::firstOrCreate(
+            $student = Student::firstOrCreate(
                 ['roll_number' => "STU00{$i}"],
                 [
                     'user_id' => $newStudentUser->id,
@@ -202,6 +203,35 @@ class TenantDatabaseSeeder extends Seeder
                     'admission_year' => 2023,
                 ]
             );
+
+            if ($i === 1) {
+                $parentRole = Role::firstOrCreate(['name' => 'parent', 'guard_name' => 'web']);
+
+                $parentUser = User::query()->firstOrCreate(
+                    ['email' => 'parent@example.com'],
+                    [
+                        'name' => 'Parent User',
+                        'password' => Hash::make('password'),
+                        'email_verified_at' => now(),
+                    ],
+                );
+
+                $parentUser->syncRoles([$parentRole]);
+
+                Guardian::firstOrCreate(
+                    [
+                        'student_id' => $student->id,
+                        'user_id' => $parentUser->id,
+                        'relation' => 'Father',
+                    ],
+                    [
+                        'first_name' => 'Parent',
+                        'last_name' => 'User',
+                        'email' => $parentUser->email,
+                        'is_primary_contact' => true,
+                    ],
+                );
+            }
         }
 
         // Subjects
