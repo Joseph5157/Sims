@@ -1,118 +1,218 @@
 <x-filament-panels::page>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Attendance Overview -->
-        <x-filament::section heading="Attendance Overview">
-            @if($student)
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-muted-foreground">Attendance</p>
-                        <p class="text-4xl font-semibold mt-1">
-                            {{ $student->getAttendancePercentage() }}<span class="text-2xl">%</span>
-                        </p>
-                    </div>
-                    <div class="text-5xl">
-                        @if($student->getAttendancePercentage() < 50)
-                            <span class="inline-block px-3 py-1 text-xs font-semibold text-white bg-red-500 rounded-full">Low</span>
-                        @elseif($student->getAttendancePercentage() < 75)
-                            <span class="inline-block px-3 py-1 text-xs font-semibold text-white bg-yellow-500 rounded-full">Moderate</span>
-                        @else
-                            <span class="inline-block px-3 py-1 text-xs font-semibold text-white bg-green-500 rounded-full">Good</span>
-                        @endif
-                    </div>
-                </div>
-                <div class="mt-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                        class="h-full rounded-full transition-all duration-300
-                            @if($student->getAttendancePercentage() < 50)
-                                bg-red-500
-                            @elseif($student->getAttendancePercentage() < 75)
-                                bg-yellow-500
-                            @else
-                                bg-emerald-500
-                            @endif"
-                        style="width: {{ $student->getAttendancePercentage() }}%">
-                    </div>
-                </div>
-            @else
-                <p class="text-muted-foreground py-8 text-center">No attendance data available.</p>
-            @endif
-        </x-filament::section>
+    @if ($student === null)
+        <x-filament::section>
+            <x-slot name="heading">Student Overview</x-slot>
 
-        <!-- Recent Grades -->
-        <x-filament::section heading="Recent Grades">
-            @if($recentGrades->isNotEmpty())
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b dark:border-gray-700">
-                                <th class="text-left py-3 px-4">Subject</th>
-                                <th class="text-left py-3 px-4">Exam Type</th>
-                                <th class="text-right py-3 px-4">Marks</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($recentGrades as $grade)
-                                <tr class="border-b dark:border-gray-700 last:border-none">
-                                    <td class="py-3 px-4">{{ $grade->subject?->name ?? 'N/A' }}</td>
-                                    <td class="py-3 px-4">{{ ucfirst(str_replace('_', ' ', $grade->exam_type)) }}</td>
-                                    <td class="py-3 px-4 text-right font-medium">
-                                        {{ $grade->marks_obtained }} / {{ $grade->total_marks }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <p class="text-muted-foreground py-8 text-center">No grades recorded yet.</p>
-            @endif
+            <p class="py-8 text-center text-gray-400 dark:text-gray-300">
+                No student profile linked to your account.
+            </p>
         </x-filament::section>
+    @else
+        @php
+            $studentName = $student->user->name;
+            $studentClass = $student->collegeClass?->name ?? 'N/A';
+            $attendancePercentage = $student->getAttendancePercentage();
+            $totalGradesCount = $recentGrades->count();
+            $activeNoticesCount = $recentNotices->count();
+            $attendanceColorClass = $attendancePercentage >= 75
+                ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/20'
+                : ($attendancePercentage >= 50
+                    ? 'text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/20'
+                    : 'text-red-600 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-500/10 dark:border-red-500/20');
+            $attendanceBarClass = $attendancePercentage >= 75
+                ? 'bg-emerald-500'
+                : ($attendancePercentage >= 50 ? 'bg-amber-500' : 'bg-red-500');
+        @endphp
 
-        <!-- Recent Notices -->
-        <x-filament::section heading="Recent Notices">
-            @if($recentNotices->isNotEmpty())
-                <div class="space-y-4">
-                    @foreach($recentNotices as $notice)
-                        <div class="border-b border-gray-200 dark:border-gray-700 pb-3 mb-3 last:border-0">
-                            <h4 class="font-medium text-lg">{{ $notice->title }}</h4>
-                            <p class="text-gray-600 dark:text-gray-400 mt-2">{{ $notice->content }}</p>
-                            <p class="text-xs text-muted-foreground mt-3">Expires: {{ $notice->expiry_date ? $notice->expiry_date->format('d M Y') : 'N/A' }}</p>
+        <div class="space-y-6">
+            <div class="rounded-xl border border-gray-200 bg-gray-900 text-white shadow-sm dark:border-gray-700">
+                <div class="border-l-4 border-amber-400 p-6">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p class="text-sm font-medium uppercase tracking-[0.2em] text-white/60">
+                                Student Portal
+                            </p>
+                            <h1 class="mt-2 text-3xl font-semibold tracking-tight">
+                                {{ $studentName }}
+                            </h1>
                         </div>
-                    @endforeach
-                </div>
-            @else
-                <p class="text-muted-foreground py-8 text-center">No notices at this time.</p>
-            @endif
-        </x-filament::section>
 
-        <!-- Today's Timetable -->
-        <x-filament::section heading="Today's Timetable">
-            @if($todayTimetable->isNotEmpty())
-                <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-gray-200 dark:border-gray-700">
-                            <th class="py-3 px-4 text-left">Period</th>
-                            <th class="py-3 px-4 text-left">Subject</th>
-                            <th class="py-3 px-4 text-left">Faculty</th>
-                            <th class="py-3 px-4 text-left">Room</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($todayTimetable as $slot)
-                            <tr class="border-b border-gray-200 dark:border-gray-700 last:border-0">
-                                <td class="py-1 pr-6">{{ $slot->period }}</td>
-                                <td class="py-1 pr-6">{{ $slot->subject?->name ?? 'N/A' }}</td>
-                                <td class="py-1 pr-6">{{ $slot->faculty?->user?->name ?? 'N/A' }}</td>
-                                <td class="py-1 pr-6">{{ $slot->room ?? 'N/A' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        <div class="text-left md:text-right">
+                            <p class="text-sm text-white/60">Class</p>
+                            <p class="mt-1 text-xl font-semibold">{{ $studentClass }}</p>
+                        </div>
+                    </div>
                 </div>
-            @else
-                <p class="text-muted-foreground py-8 text-center">No classes scheduled for today.</p>
-            @endif
-        </x-filament::section>
-    </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-full {{ $attendanceColorClass }}">
+                            <x-filament::icon icon="heroicon-o-chart-bar-square" class="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p class="text-2xl font-semibold">{{ $attendancePercentage }}%</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Attendance</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-full bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">
+                            <x-filament::icon icon="heroicon-o-academic-cap" class="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p class="text-2xl font-semibold">{{ $totalGradesCount }}</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Total Grades</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
+                            <x-filament::icon icon="heroicon-o-megaphone" class="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p class="text-2xl font-semibold">{{ $activeNoticesCount }}</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Active Notices</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <x-filament::section>
+                    <x-slot name="heading">Attendance Overview</x-slot>
+
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Attendance</p>
+                            <p class="mt-1 text-4xl font-semibold">
+                                {{ $attendancePercentage }}<span class="text-2xl">%</span>
+                            </p>
+                        </div>
+
+                        <span class="inline-flex rounded-full border px-3 py-1 text-xs font-semibold {{ $attendanceColorClass }}">
+                            {{ $attendancePercentage >= 75 ? 'Good' : ($attendancePercentage >= 50 ? 'Moderate' : 'Low') }}
+                        </span>
+                    </div>
+
+                    <div class="mt-4 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                        <div class="h-full rounded-full {{ $attendanceBarClass }}" style="width: {{ $attendancePercentage }}%"></div>
+                    </div>
+                </x-filament::section>
+
+                <x-filament::section>
+                    <x-slot name="heading">Recent Grades</x-slot>
+
+                    @if ($recentGrades->isNotEmpty())
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="py-3 px-4 text-left font-medium text-gray-700 dark:text-gray-200">Subject</th>
+                                        <th class="py-3 px-4 text-left font-medium text-gray-700 dark:text-gray-200">Exam Type</th>
+                                        <th class="py-3 px-4 text-left font-medium text-gray-700 dark:text-gray-200">Marks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($recentGrades as $grade)
+                                        @php
+                                            $gradePercentage = $grade->total_marks > 0 ? ($grade->marks_obtained / $grade->total_marks) * 100 : 0;
+                                            $gradeBadgeClass = $gradePercentage > 75
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20'
+                                                : ($gradePercentage > 50
+                                                    ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20'
+                                                    : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20');
+                                        @endphp
+
+                                        <tr class="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-700/40">
+                                            <td class="py-1 pr-8 font-medium">{{ $grade->subject?->name ?? 'N/A' }}</td>
+                                            <td class="py-1 pr-8">{{ ucfirst(str_replace('_', ' ', $grade->exam_type)) }}</td>
+                                            <td class="py-1 pr-8">
+                                                <span class="inline-flex rounded-full border px-3 py-1 text-xs font-semibold {{ $gradeBadgeClass }}">
+                                                    {{ $grade->marks_obtained }} / {{ $grade->total_marks }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="py-8 text-center text-gray-400 dark:text-gray-300">No grades recorded yet.</p>
+                    @endif
+                </x-filament::section>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <x-filament::section>
+                    <x-slot name="heading">Recent Notices</x-slot>
+
+                    @if ($recentNotices->isNotEmpty())
+                        <div class="space-y-4">
+                            @foreach ($recentNotices as $notice)
+                                <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100">
+                                            {{ $notice->title }}
+                                        </h4>
+                                    </div>
+
+                                    <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                                        {{ $notice->content }}
+                                    </p>
+
+                                    <div class="mt-4 flex justify-end">
+                                        <span class="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                                            Expires: {{ $notice->expires_at ? $notice->expires_at->format('d M Y') : 'N/A' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="py-8 text-center text-gray-400 dark:text-gray-300">No notices at this time.</p>
+                    @endif
+                </x-filament::section>
+
+                <x-filament::section>
+                    <x-slot name="heading">Today's Timetable</x-slot>
+
+                    @if ($todayTimetable->isNotEmpty())
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="py-3 px-4 text-left font-medium text-gray-700 dark:text-gray-200">Period</th>
+                                        <th class="py-3 px-4 text-left font-medium text-gray-700 dark:text-gray-200">Subject</th>
+                                        <th class="py-3 px-4 text-left font-medium text-gray-700 dark:text-gray-200">Faculty</th>
+                                        <th class="py-3 px-4 text-left font-medium text-gray-700 dark:text-gray-200">Room</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($todayTimetable as $slot)
+                                        <tr class="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-700/40">
+                                            <td class="py-1 pr-8 font-medium">{{ $slot->period }}</td>
+                                            <td class="py-1 pr-8">{{ $slot->subject?->name ?? 'N/A' }}</td>
+                                            <td class="py-1 pr-8">{{ $slot->faculty?->user?->name ?? 'N/A' }}</td>
+                                            <td class="py-1 pr-8">{{ $slot->room ?? 'N/A' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="flex flex-col items-center justify-center py-12 text-center text-gray-400 dark:text-gray-300">
+                            <x-filament::icon icon="heroicon-o-calendar-days" class="h-10 w-10 text-gray-400 dark:text-gray-500" />
+                            <p class="mt-4 text-sm font-medium">No classes scheduled for today</p>
+                        </div>
+                    @endif
+                </x-filament::section>
+            </div>
+        </div>
+    @endif
 </x-filament-panels::page>

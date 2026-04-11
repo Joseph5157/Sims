@@ -3,11 +3,10 @@
 namespace App\Filament\Student\Pages;
 
 use App\Models\Notice;
-use BackedEnum;
-use Filament\Pages\Page;
-use Illuminate\Contracts\Support\Htmlable;
 use App\Models\TimetableSlot;
+use BackedEnum;
 use Carbon\Carbon;
+use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 
 class StudentDashboard extends Page
@@ -18,14 +17,14 @@ class StudentDashboard extends Page
 
     protected static ?string $title = 'Dashboard';
 
-    public function getHeading(): string|Htmlable
+    public function getHeading(): ?string
     {
-        return 'Welcome back, ' . (Auth::user()?->name ?? 'Student');
+        return null;
     }
 
-    public function getSubheading(): string|Htmlable
+    public function getSubheading(): ?string
     {
-        return 'Here is your academic overview';
+        return null;
     }
 
     public static function canAccess(): bool
@@ -42,7 +41,7 @@ class StudentDashboard extends Page
 
         return [
             'student' => $student,
-            'recentGrades' => $student ? $student->grades()->latest()->take(5)->get() : collect(),
+            'recentGrades' => $student ? $student->grades()->with('subject')->latest()->take(5)->get() : collect(),
             'recentNotices' => Notice::where('expires_at', '>', now())
                 ->orWhereNull('expires_at')
                 ->latest()

@@ -57,7 +57,7 @@
                             <p class="text-2xl font-semibold">
                                 {{ $attendancePercentage }}%
                             </p>
-                            <p class="text-sm text-muted-foreground">Attendance</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Attendance</p>
                         </div>
                     </div>
                 </div>
@@ -69,7 +69,7 @@
                         </div>
                         <div>
                             <p class="text-2xl font-semibold">{{ $totalGradesCount }}</p>
-                            <p class="text-sm text-muted-foreground">Total Grades</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Total Grades</p>
                         </div>
                     </div>
                 </div>
@@ -81,7 +81,7 @@
                         </div>
                         <div>
                             <p class="text-2xl font-semibold">{{ $activeNoticesCount }}</p>
-                            <p class="text-sm text-muted-foreground">Active Notices</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Active Notices</p>
                         </div>
                     </div>
                 </div>
@@ -153,7 +153,7 @@
 
                                     <div class="mt-4 flex justify-end">
                                         <span class="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                                            Expires: {{ $notice->expiry_date ? $notice->expiry_date->format('d M Y') : 'N/A' }}
+                                        Expires: {{ $notice->expires_at ? $notice->expires_at->format('d M Y') : 'N/A' }}
                                         </span>
                                     </div>
                                 </div>
