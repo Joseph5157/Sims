@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(/c/Users/sikha/Herd/bin/php8.4.exe artisan:*)",
+      "Read(//c/Users/sikha/Herd/laravel-new-college-portal/**)",
+      "Bash(ls -la /c/Users/sikha/Herd/laravel-new-college-portal/.claude/worktrees/infallible-ishizaka/.env*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(find . -name \"*.php\" -type f -exec grep -l \"TODO\\\\|FIXME\\\\|HACK\\\\|XXX\" {} \\\\;)"
+    ]
+  }
+}

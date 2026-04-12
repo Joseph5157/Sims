@@ -12,6 +12,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Validation\Rules\Unique;
+use Illuminate\Database\Eloquent\Builder;
 
 class GradeResource extends Resource
 {
@@ -51,13 +53,17 @@ class GradeResource extends Resource
                     ])
                     ->required(),
 
-                Forms\Components\TextInput::make('marks_obtained')
-                    ->numeric()
-                    ->required(),
-
                 Forms\Components\TextInput::make('total_marks')
                     ->numeric()
-                    ->required(),
+                    ->required()
+                    ->minValue(0),
+
+                Forms\Components\TextInput::make('marks_obtained')
+                    ->numeric()
+                    ->required()
+                    ->minValue(0)
+                    ->lte('total_marks')
+                    ->helperText('Marks obtained cannot exceed total marks'),
 
                 Forms\Components\Select::make('entered_by')
                     ->relationship('enteredBy', 'name')
@@ -65,6 +71,23 @@ class GradeResource extends Resource
                     ->searchable()
                     ->preload(),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        // Faculty members can only see grades for students in their assigned classes
+        if ($user?->hasRole('faculty')) {
+            $query->whereHas('student.collegeClass', function (Builder $q) use ($user) {
+                $q->whereHas('faculty', function (Builder $fq) use ($user) {
+                    $fq->where('user_id', $user->id);
+                });
+            });
+        }
+
+        return $query;
     }
 
     public static function table(Table $table): Table

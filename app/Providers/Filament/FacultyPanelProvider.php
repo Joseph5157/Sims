@@ -2,8 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Pages\AttendanceReport;
 use App\Filament\Faculty\Pages\FacultyTimetable;
 use App\Filament\Faculty\Resources\AttendanceResource;
+use App\Filament\Faculty\Widgets\AttendanceChartWidget;
+use App\Filament\Faculty\Widgets\FacultyStatsWidget;
+use App\Filament\Faculty\Widgets\TodayScheduleWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -34,11 +38,13 @@ class FacultyPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->brandName('Faculty Portal')
             ->discoverResources(in: app_path('Filament/Faculty/Resources'), for: 'App\Filament\Faculty\Resources')
             ->discoverPages(in: app_path('Filament/Faculty/Pages'), for: 'App\Filament\Faculty\Pages')
             ->pages([
                 Dashboard::class,
                 FacultyTimetable::class,
+                AttendanceReport::class,
             ])
             // Force registration of AttendanceResource
             ->resources([
@@ -46,6 +52,9 @@ class FacultyPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Faculty/Widgets'), for: 'App\Filament\Faculty\Widgets')
             ->widgets([
+                FacultyStatsWidget::class,
+                AttendanceChartWidget::class,
+                TodayScheduleWidget::class,
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])

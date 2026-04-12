@@ -57,7 +57,7 @@
                             <p class="text-2xl font-semibold">
                                 {{ $attendancePercentage }}%
                             </p>
-                            <p class="text-sm text-muted-foreground">Attendance</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Attendance</p>
                         </div>
                     </div>
                 </div>
@@ -69,7 +69,7 @@
                         </div>
                         <div>
                             <p class="text-2xl font-semibold">{{ $totalGradesCount }}</p>
-                            <p class="text-sm text-muted-foreground">Total Grades</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Total Grades</p>
                         </div>
                     </div>
                 </div>
@@ -81,11 +81,56 @@
                         </div>
                         <div>
                             <p class="text-2xl font-semibold">{{ $activeNoticesCount }}</p>
-                            <p class="text-sm text-muted-foreground">Active Notices</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-300">Active Notices</p>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {{-- Attendance warning card --}}
+            @if ($attendancePercentage < 75)
+                @php
+                    $absent  = $student->attendances->where('status', 'absent')->count();
+                    $present = $student->attendances->whereIn('status', ['present', 'late', 'excused'])->count();
+                    $shortfall = $student->getDaysNeededForAttendanceThreshold();
+                @endphp
+                <div class="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm dark:border-red-500/20 dark:bg-red-500/10">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20">
+                            <x-filament::icon icon="heroicon-o-exclamation-triangle" class="h-6 w-6 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-base font-semibold text-red-800 dark:text-red-300">
+                                Attendance Warning for {{ $studentName }}
+                            </p>
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                Current attendance is <strong>{{ $attendancePercentage }}%</strong>, which is below
+                                the required <strong>75%</strong>.
+                                @if ($shortfall > 0)
+                                    Your ward needs to attend <strong>{{ $shortfall }} more consecutive class day(s)</strong>
+                                    to meet the minimum requirement.
+                                @endif
+                            </p>
+                            <div class="mt-4 flex gap-4 text-sm">
+                                <div class="rounded-lg bg-white px-4 py-2 dark:bg-gray-800">
+                                    <span class="font-semibold text-emerald-700 dark:text-emerald-400">{{ $present }}</span>
+                                    <span class="ml-1 text-gray-500 dark:text-gray-400">Present</span>
+                                </div>
+                                <div class="rounded-lg bg-white px-4 py-2 dark:bg-gray-800">
+                                    <span class="font-semibold text-red-700 dark:text-red-400">{{ $absent }}</span>
+                                    <span class="ml-1 text-gray-500 dark:text-gray-400">Absent</span>
+                                </div>
+                                @if ($shortfall > 0)
+                                    <div class="rounded-lg bg-white px-4 py-2 dark:bg-gray-800">
+                                        <span class="font-semibold text-orange-700 dark:text-orange-400">+{{ $shortfall }}</span>
+                                        <span class="ml-1 text-gray-500 dark:text-gray-400">Days Needed</span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <x-filament::section>
@@ -153,7 +198,7 @@
 
                                     <div class="mt-4 flex justify-end">
                                         <span class="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                                            Expires: {{ $notice->expiry_date ? $notice->expiry_date->format('d M Y') : 'N/A' }}
+                                        Expires: {{ $notice->expires_at ? $notice->expires_at->format('d M Y') : 'N/A' }}
                                         </span>
                                     </div>
                                 </div>

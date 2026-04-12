@@ -9,12 +9,15 @@ use BackedEnum;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use Filament\Panel;
+use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Auth;
 
 class ParentDashboard extends Page
 {
     protected string $view = 'filament.parent.pages.parent-dashboard';
+
+    protected Width|string|null $maxContentWidth = Width::Full;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-home';
 
@@ -30,14 +33,14 @@ class ParentDashboard extends Page
         return 'dashboard';
     }
 
-    public function getHeading(): string|Htmlable
+    public function getHeading(): string|Htmlable|null
     {
-        return 'Welcome back, '.(Auth::user()?->name ?? 'Parent');
+        return null;
     }
 
-    public function getSubheading(): string|Htmlable
+    public function getSubheading(): string|Htmlable|null
     {
-        return 'Here is your child\'s academic overview';
+        return null;
     }
 
     public static function canAccess(): bool
@@ -48,7 +51,24 @@ class ParentDashboard extends Page
     public function getViewData(): array
     {
         $user = Auth::user();
-        $guardian = Guardian::where('user_id', $user->id)->with('student.user', 'student.grades.subject', 'student.attendances', 'student.collegeClass')->first();
+
+        // Verify user is authorized and is a guardian
+        if (!$user || !$user->hasRole('parent')) {
+            return [
+                'guardian' => null,
+                'student' => null,
+                'attendancePercentage' => 0,
+                'recentGrades' => collect(),
+                'activeNotices' => collect(),
+                'todayTimetable' => collect(),
+            ];
+        }
+
+        // Fetch guardian record associated with the current authenticated user
+        $guardian = Guardian::where('user_id', $user->id)
+            ->with('student.user', 'student.grades.subject', 'student.attendances', 'student.collegeClass')
+            ->first();
+
         $student = $guardian?->student;
         $attendancePercentage = $student?->getAttendancePercentage() ?? 0;
         $recentGrades = $student
