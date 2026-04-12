@@ -84,6 +84,32 @@ class Student extends Model implements HasMedia
         return round(($present / $total) * 100, 1);
     }
 
+    public function getDaysNeededForAttendanceThreshold(float $threshold = 75.0): int
+    {
+        $attendances = $this->attendances()->get();
+        $present = $attendances->whereIn('status', ['present', 'late', 'excused'])->count();
+        $absent = $attendances->where('status', 'absent')->count();
+        $total = $attendances->count();
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        $currentPercentage = ($present / $total) * 100;
+
+        // If already above threshold, no days needed
+        if ($currentPercentage >= $threshold) {
+            return 0;
+        }
+
+        // Calculate consecutive days needed to reach threshold
+        // Formula: x = (threshold * total - 100 * present) / (100 - threshold)
+        $thresholdDecimal = $threshold / 100;
+        $daysNeeded = ceil(($thresholdDecimal * $total - $present) / (1 - $thresholdDecimal));
+
+        return max(0, $daysNeeded);
+    }
+
     public function getLowAttendanceSubjects(float $threshold = 75.0)
     {
         return $this->subjects()

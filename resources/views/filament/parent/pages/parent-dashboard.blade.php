@@ -92,7 +92,7 @@
                 @php
                     $absent  = $student->attendances->where('status', 'absent')->count();
                     $present = $student->attendances->whereIn('status', ['present', 'late', 'excused'])->count();
-                    $shortfall = max(0, (int) ceil(3 * $absent - $present));
+                    $shortfall = $student->getDaysNeededForAttendanceThreshold();
                 @endphp
                 <div class="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm dark:border-red-500/20 dark:bg-red-500/10">
                     <div class="flex items-start gap-4">

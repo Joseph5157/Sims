@@ -50,7 +50,7 @@ class TenantDatabaseSeeder extends Seeder
             ['email' => 'admin@example.com'],
             [
                 'name' => 'System Admin',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('Demo@12345'),
                 'email_verified_at' => now(),
             ],
         );
@@ -61,7 +61,7 @@ class TenantDatabaseSeeder extends Seeder
             ['email' => 'faculty@example.com'],
             [
                 'name' => 'Faculty User',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('Demo@12345'),
                 'email_verified_at' => now(),
             ],
         );
@@ -72,7 +72,7 @@ class TenantDatabaseSeeder extends Seeder
             ['email' => 'student@example.com'],
             [
                 'name' => 'Student User',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('Demo@12345'),
                 'email_verified_at' => now(),
             ],
         );
@@ -144,7 +144,7 @@ class TenantDatabaseSeeder extends Seeder
             ['email' => 'faculty2@example.com'],
             [
                 'name' => 'Faculty User 2',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('Demo@12345'),
                 'email_verified_at' => now(),
             ],
         );
@@ -185,7 +185,7 @@ class TenantDatabaseSeeder extends Seeder
                     ['email' => $studentEmail],
                     [
                         'name' => "Student User {$i}",
-                        'password' => Hash::make('password'),
+                        'password' => Hash::make('Demo@12345'),
                         'email_verified_at' => now(),
                     ],
                 );
@@ -215,7 +215,7 @@ class TenantDatabaseSeeder extends Seeder
                     ['email' => 'parent@example.com'],
                     [
                         'name' => 'Parent User',
-                        'password' => Hash::make('password'),
+                        'password' => Hash::make('Demo@12345'),
                         'email_verified_at' => now(),
                     ],
                 );
