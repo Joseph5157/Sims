@@ -83,6 +83,26 @@
                 </div>
             </div>
 
+            {{-- Attendance warning banner --}}
+            @if ($attendancePercentage < 75)
+                <div class="rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-500/20 dark:bg-red-500/10">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20">
+                            <x-filament::icon icon="heroicon-o-exclamation-triangle" class="h-5 w-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div>
+                            <p class="font-semibold text-red-800 dark:text-red-300">
+                                Low Attendance Warning — {{ $attendancePercentage }}%
+                            </p>
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                Your attendance is below the required <strong>75%</strong>.
+                                You risk being barred from examinations. Please attend all upcoming classes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <x-filament::section>
                     <x-slot name="heading">Attendance Overview</x-slot>

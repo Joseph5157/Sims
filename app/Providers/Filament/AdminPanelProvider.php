@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Pages\AttendanceDefaulters;
 use App\Filament\Admin\Pages\AttendanceReport;
 use App\Filament\Admin\Pages\GradebookReport;
 use App\Filament\Admin\Pages\StudentReportCard;
@@ -70,6 +71,7 @@ class AdminPanelProvider extends PanelProvider
                 GradebookReport::class,
                 AttendanceReport::class,
                 StudentReportCard::class,
+                AttendanceDefaulters::class,
             ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

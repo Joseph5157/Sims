@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use Illuminate\Support\Facades\Date;
 
 class StudentResource extends Resource
 {
@@ -57,7 +58,7 @@ class StudentResource extends Resource
                     ->required()
                     ->numeric()
                     ->minValue(2000)
-                    ->maxValue(2100)
+                    ->maxValue(now()->year + 1)
                     ->helperText('Start year (e.g. 2026).'),
                 SpatieMediaLibraryFileUpload::make('photo')
                     ->disk('r2')
@@ -66,6 +67,23 @@ class StudentResource extends Resource
                     ->maxSize(1024)
                     ->label('Student Photo'),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        // Faculty members can only see students from their assigned classes
+        if ($user?->hasRole('faculty')) {
+            $query->whereHas('collegeClass', function (Builder $q) use ($user) {
+                $q->whereHas('faculty', function (Builder $fq) use ($user) {
+                    $fq->where('user_id', $user->id);
+                });
+            });
+        }
+
+        return $query;
     }
 
     public static function table(Table $table): Table

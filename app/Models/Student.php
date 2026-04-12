@@ -84,8 +84,26 @@ class Student extends Model implements HasMedia
         return round(($present / $total) * 100, 1);
     }
 
-    public function getLowAttendanceSubjects()
+    public function getLowAttendanceSubjects(float $threshold = 75.0)
     {
-        return collect();
+        return $this->subjects()
+            ->withCount(['attendances' => function ($q) {
+                $q->where('status', 'present');
+            }])
+            ->get()
+            ->filter(function ($subject) use ($threshold) {
+                $attendances = $this->attendances()
+                    ->where('college_class_id', $this->college_class_id)
+                    ->get();
+
+                if ($attendances->isEmpty()) {
+                    return false;
+                }
+
+                $present = $attendances->where('status', 'present')->count();
+                $percentage = ($present / $attendances->count()) * 100;
+
+                return $percentage < $threshold;
+            });
     }
 }
