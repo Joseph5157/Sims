@@ -72,7 +72,7 @@ class Student extends Model implements HasMedia
 
     public function getAttendancePercentage(): float
     {
-        $attendances = $this->attendances();
+        $attendances = $this->attendances()->get();
 
         $total = $attendances->count();
         if ($total === 0) {

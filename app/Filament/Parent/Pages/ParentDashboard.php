@@ -51,7 +51,24 @@ class ParentDashboard extends Page
     public function getViewData(): array
     {
         $user = Auth::user();
-        $guardian = Guardian::where('user_id', $user->id)->with('student.user', 'student.grades.subject', 'student.attendances', 'student.collegeClass')->first();
+
+        // Verify user is authorized and is a guardian
+        if (!$user || !$user->hasRole('parent')) {
+            return [
+                'guardian' => null,
+                'student' => null,
+                'attendancePercentage' => 0,
+                'recentGrades' => collect(),
+                'activeNotices' => collect(),
+                'todayTimetable' => collect(),
+            ];
+        }
+
+        // Fetch guardian record associated with the current authenticated user
+        $guardian = Guardian::where('user_id', $user->id)
+            ->with('student.user', 'student.grades.subject', 'student.attendances', 'student.collegeClass')
+            ->first();
+
         $student = $guardian?->student;
         $attendancePercentage = $student?->getAttendancePercentage() ?? 0;
         $recentGrades = $student
