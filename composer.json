@@ -6,7 +6,7 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "althinect/filament-spatie-roles-permissions": "*",
         "bezhansalleh/filament-shield": "*",
         "filament/filament": "~4.0",

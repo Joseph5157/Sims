@@ -7,6 +7,10 @@ nixPkgs = [
     "php84Extensions.curl",
     "php84Extensions.zip",
     "php84Extensions.gd",
+    "php84Extensions.intl",
+    "php84Extensions.exif",
+    "php84Extensions.bcmath",
+    "php84Extensions.pcntl",
     "composer",
 ]
 
@@ -15,6 +19,8 @@ cmds = [
     "composer install --no-dev --optimize-autoloader",
     "npm install",
     "npm run build",
+    "mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/framework/testing storage/logs bootstrap/cache",
+    "chmod -R 775 storage bootstrap/cache",
 ]
 
 [phases.deploy]
