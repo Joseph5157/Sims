@@ -7,6 +7,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "ext-exif": "*",
+        "ext-gd": "*",
+        "ext-intl": "*",
+        "ext-zip": "*",
         "althinect/filament-spatie-roles-permissions": "*",
         "bezhansalleh/filament-shield": "*",
         "filament/filament": "~4.0",
