@@ -3,6 +3,11 @@
         {{ $this->form }}
     </x-filament::section>
 
+    @php
+        $classId = $this->data['college_class_id'] ?? null;
+        $examGroupId = $this->data['exam_group_id'] ?? null;
+    @endphp
+
     @if ($exams->isNotEmpty() && $students->isNotEmpty())
         <x-filament::section heading='Gradebook'>
             <div class='overflow-x-auto'>
@@ -35,7 +40,16 @@
                                     }
                                 }
                                 $overallPct = $totalMax > 0 ? round(($totalObtained / $totalMax) * 100, 1) : 0;
-                                $overallGrade = $totalMax > 0 ? \App\Models\GradingLevel::calculateGrade($overallPct, $college_class_id) : null;
+                                $overallGrade = $totalMax > 0 ? \App\Models\GradingLevel::calculateGrade($overallPct, $classId) : null;
+                                $gradeName = $overallGrade?->name ?? '-';
+                                $gradeClass = match(true) {
+                                    in_array($gradeName, ['A1', 'A2']) => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
+                                    in_array($gradeName, ['B1', 'B2']) => 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+                                    in_array($gradeName, ['C1', 'C2']) => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-300',
+                                    in_array($gradeName, ['D1', 'D2']) => 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300',
+                                    $gradeName === 'E' => 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300',
+                                    default => 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+                                };
                             @endphp
                             <tr class='border-b border-gray-100 odd:bg-white even:bg-gray-50 dark:border-gray-700 dark:odd:bg-gray-800 dark:even:bg-gray-700/40'>
                                 <td class='whitespace-nowrap px-4 py-2 font-medium'>{{ $student->user?->name }}</td>
@@ -64,8 +78,8 @@
                                 <td class='whitespace-nowrap px-4 py-2 text-center font-medium'>{{ $totalObtained }}/{{ $totalMax }}</td>
                                 <td class='whitespace-nowrap px-4 py-2 text-center'>{{ $overallPct }}%</td>
                                 <td class='whitespace-nowrap px-4 py-2 text-center'>
-                                    <span class='inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300'>
-                                        {{ $overallGrade?->name ?? '-' }}
+                                    <span class='inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $gradeClass }}'>
+                                        {{ $gradeName }}
                                     </span>
                                 </td>
                             </tr>
@@ -74,7 +88,7 @@
                 </table>
             </div>
         </x-filament::section>
-    @elseif ($college_class_id && $exam_group_id)
+    @elseif ($classId && $examGroupId)
         <x-filament::section>
             <p class='py-8 text-center text-gray-500'>No students or exams found for this selection.</p>
         </x-filament::section>

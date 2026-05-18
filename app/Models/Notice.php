@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\NoticeTarget;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Notice extends Model
 {
@@ -11,28 +13,25 @@ class Notice extends Model
 
     protected $fillable = [
         'title',
-        'content',
+        'body',
+        'target',
+        'college_class_id',
         'created_by',
-        'department_id',
-        'expires_at',
+        'published_at',
     ];
 
     protected $casts = [
-        'expires_at' => 'datetime',
+        'target' => NoticeTarget::class,
+        'published_at' => 'datetime',
     ];
 
-    public function creator()
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function department()
+    public function collegeClass(): BelongsTo
     {
-        return $this->belongsTo(Department::class);
-    }
-
-    public function getExpiryDateAttribute()
-    {
-        return $this->expires_at;
+        return $this->belongsTo(CollegeClass::class);
     }
 }

@@ -2,8 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Pages\AttendanceDefaulters;
 use App\Filament\Admin\Pages\AttendanceReport;
 use App\Filament\Admin\Pages\GradebookReport;
+use App\Filament\Admin\Pages\ImportStudents;
+use App\Filament\Admin\Pages\ManageSchoolSettings;
 use App\Filament\Admin\Pages\StudentReportCard;
 use App\Filament\Admin\Widgets\AttendanceOverviewWidget;
 use App\Filament\Admin\Widgets\RecentActivityWidget;
@@ -70,6 +73,9 @@ class AdminPanelProvider extends PanelProvider
                 GradebookReport::class,
                 AttendanceReport::class,
                 StudentReportCard::class,
+                AttendanceDefaulters::class,
+                ImportStudents::class,
+                ManageSchoolSettings::class,
             ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

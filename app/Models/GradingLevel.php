@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\GradingLevelType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,12 +14,26 @@ class GradingLevel extends Model
         'min_score',
         'max_score',
         'grade_point',
+        'type',
+        'academic_year_id',
         'college_class_id',
+    ];
+
+    protected $casts = [
+        'min_score' => 'decimal:2',
+        'max_score' => 'decimal:2',
+        'grade_point' => 'decimal:2',
+        'type' => GradingLevelType::class,
     ];
 
     public function collegeClass(): BelongsTo
     {
         return $this->belongsTo(CollegeClass::class);
+    }
+
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class);
     }
 
     public function examScores(): HasMany

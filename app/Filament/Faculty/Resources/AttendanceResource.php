@@ -3,11 +3,14 @@
 namespace App\Filament\Faculty\Resources;
 
 use App\Exports\AttendanceExporter;
+use App\Filament\Faculty\Resources\Attendances\Pages\CreateAttendance;
+use App\Filament\Faculty\Resources\Attendances\Pages\EditAttendance;
+use App\Filament\Faculty\Resources\Attendances\Pages\ListAttendances;
 use App\Models\Attendance;
 use App\Models\CollegeClass;
 use App\Models\Student;
+use App\Models\User;
 use BackedEnum;
-use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ExportAction;
 use Filament\Forms\Components\DatePicker;
@@ -23,6 +26,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use UnitEnum;
 
 class AttendanceResource extends Resource
 {
@@ -36,9 +40,12 @@ class AttendanceResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    // Hidden from nav — replaced by MarkAttendance, AttendanceGrid, AttendanceHistory pages
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canAccess(): bool
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = Auth::user();
 
         return $user?->hasRole('faculty') ?? false;
@@ -211,9 +218,9 @@ class AttendanceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Faculty\Resources\Attendances\Pages\ListAttendances::route('/'),
-            'create' => \App\Filament\Faculty\Resources\Attendances\Pages\CreateAttendance::route('/create'),
-            'edit' => \App\Filament\Faculty\Resources\Attendances\Pages\EditAttendance::route('/{record}/edit'),
+            'index' => ListAttendances::route('/'),
+            'create' => CreateAttendance::route('/create'),
+            'edit' => EditAttendance::route('/{record}/edit'),
         ];
     }
 }

@@ -110,7 +110,7 @@ class TenantResource extends Resource
                             tenancy()->initialize($record);
 
                             $tenantAdminId = (string) User::query()
-                                ->where('email', 'admin@example.com')
+                                ->whereHas('roles', fn ($query) => $query->where('name', 'admin'))
                                 ->value('id');
                         } finally {
                             tenancy()->end();
@@ -118,7 +118,7 @@ class TenantResource extends Resource
 
                         if ($tenantAdminId === '') {
                             Notification::make()
-                                ->title('Tenant admin user not found (admin@example.com).')
+                                ->title('Tenant admin user not found.')
                                 ->danger()
                                 ->send();
 

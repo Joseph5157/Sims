@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Models\AcademicYear;
 use App\Models\CollegeClass;
 use App\Models\Exam;
 use App\Models\ExamGroup;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Page;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
@@ -26,15 +28,19 @@ class GradebookReport extends Page implements HasForms
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-table-cells';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Examinations';
+    protected static string|UnitEnum|null $navigationGroup = 'Examination';
 
-    protected static ?string $navigationLabel = 'Gradebook Report';
+    protected static ?string $navigationLabel = 'Gradebook';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?string $slug = 'gradebook';
 
-    public ?int $college_class_id = null;
+    protected static ?int $navigationSort = 4;
 
-    public ?int $exam_group_id = null;
+    public array $data = [
+        'college_class_id' => null,
+        'exam_group_id' => null,
+        'academic_year_id' => null,
+    ];
 
     public Collection $students;
 
@@ -46,41 +52,75 @@ class GradebookReport extends Page implements HasForms
     {
         $this->students = collect();
         $this->exams = collect();
+        $this->form->fill($this->data);
     }
 
-    protected function getFormSchema(): array
+    public function form(Schema $schema): Schema
     {
-        return [
-            Select::make('college_class_id')
-                ->label('Select Class')
-                ->options(CollegeClass::pluck('name', 'id'))
-                ->live()
-                ->afterStateUpdated(function (): void {
-                    $this->exam_group_id = null;
-                    $this->students = collect();
-                    $this->exams = collect();
-                    $this->scores = [];
-                }),
-            Select::make('exam_group_id')
-                ->label('Select Exam Group')
-                ->options(fn (): array => $this->college_class_id
-                    ? ExamGroup::where('college_class_id', $this->college_class_id)->where('is_published', true)->pluck('name', 'id')->all()
-                    : [])
-                ->live()
-                ->afterStateUpdated(function (): void {
-                    $this->loadGradebook();
-                }),
-        ];
+        return $schema
+            ->statePath('data')
+            ->schema([
+                Select::make('academic_year_id')
+                    ->label('Academic Year')
+                    ->options(fn (): array => AcademicYear::orderByDesc('start_year')->pluck('name', 'id')->all())
+                    ->live()
+                    ->afterStateUpdated(function (): void {
+                        $this->data['exam_group_id'] = null;
+                        $this->students = collect();
+                        $this->exams = collect();
+                        $this->scores = [];
+                    }),
+
+                Select::make('college_class_id')
+                    ->label('Class')
+                    ->options(fn (): array => CollegeClass::pluck('name', 'id')->all())
+                    ->live()
+                    ->afterStateUpdated(function (): void {
+                        $this->data['exam_group_id'] = null;
+                        $this->students = collect();
+                        $this->exams = collect();
+                        $this->scores = [];
+                    }),
+
+                Select::make('exam_group_id')
+                    ->label('Exam Group')
+                    ->options(function (): array {
+                        $classId = $this->data['college_class_id'] ?? null;
+                        $yearId = $this->data['academic_year_id'] ?? null;
+
+                        if (! $classId) {
+                            return [];
+                        }
+
+                        $query = ExamGroup::where('college_class_id', $classId)
+                            ->where('is_published', true);
+
+                        if ($yearId) {
+                            $query->where('academic_year_id', $yearId);
+                        }
+
+                        return $query->pluck('name', 'id')->all();
+                    })
+                    ->live()
+                    ->afterStateUpdated(fn (): null => $this->loadGradebook()),
+            ]);
     }
 
     public function loadGradebook(): void
     {
-        if (! $this->college_class_id || ! $this->exam_group_id) {
+        $classId = $this->data['college_class_id'] ?? null;
+        $examGroupId = $this->data['exam_group_id'] ?? null;
+
+        if (! $classId || ! $examGroupId) {
+            $this->students = collect();
+            $this->exams = collect();
+            $this->scores = [];
+
             return;
         }
 
-        $this->students = Student::where('college_class_id', $this->college_class_id)->with('user')->get();
-        $this->exams = Exam::where('exam_group_id', $this->exam_group_id)->with('subject')->get();
+        $this->students = Student::where('college_class_id', $classId)->with('user')->get();
+        $this->exams = Exam::where('exam_group_id', $examGroupId)->with('subject')->get();
 
         $this->scores = [];
 
@@ -106,9 +146,10 @@ class GradebookReport extends Page implements HasForms
 
     public function exportCsv(): StreamedResponse
     {
+        $classId = $this->data['college_class_id'] ?? null;
         $filename = 'gradebook-'.now()->format('Y-m-d').'.csv';
 
-        return response()->streamDownload(function (): void {
+        return response()->streamDownload(function () use ($classId): void {
             $handle = fopen('php://output', 'w');
             $header = ['Student', 'Roll No'];
 
@@ -133,7 +174,7 @@ class GradebookReport extends Page implements HasForms
 
                     if ($score && ! $score->absent && $score->marks_obtained !== null) {
                         $percentage = $exam->maximum_marks > 0 ? ((float) $score->marks_obtained / (float) $exam->maximum_marks) * 100 : 0;
-                        $gradingLevel = GradingLevel::calculateGrade($percentage, $this->college_class_id);
+                        $gradingLevel = GradingLevel::calculateGrade($percentage, $classId);
                         $grade = $gradingLevel?->name ?? '-';
                         $totalObtained += (float) $score->marks_obtained;
                         $totalMax += (float) $exam->maximum_marks;

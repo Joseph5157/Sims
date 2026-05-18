@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Faculty extends Model
 {
@@ -17,20 +19,35 @@ class Faculty extends Model
         'joining_date',
         'phone',
         'specialization',
+        'designation',
     ];
 
-    public function user()
+    protected $casts = [
+        'joining_date' => 'date',
+    ];
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function department()
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
-    public function disciplineCases()
+    public function subjects(): HasMany
+    {
+        return $this->hasMany(Subject::class);
+    }
+
+    public function disciplineCases(): HasMany
     {
         return $this->hasMany(DisciplineCase::class);
+    }
+
+    public function lessonPlans(): HasMany
+    {
+        return $this->hasMany(LessonPlan::class);
     }
 }

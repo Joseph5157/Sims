@@ -2,9 +2,11 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Enums\DayOfWeek;
 use App\Filament\Admin\Resources\TimetableSlotResource\Pages\CreateTimetableSlot;
 use App\Filament\Admin\Resources\TimetableSlotResource\Pages\EditTimetableSlot;
 use App\Filament\Admin\Resources\TimetableSlotResource\Pages\ListTimetableSlots;
+use App\Models\AcademicYear;
 use App\Models\TimetableSlot;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -21,73 +23,108 @@ class TimetableSlotResource extends Resource
 {
     protected static ?string $model = TimetableSlot::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Academic';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?string $navigationLabel = 'Timetable';
 
-    protected static ?string $recordTitleAttribute = 'day';
+    protected static ?int $navigationSort = 5;
+
+    protected static ?string $recordTitleAttribute = 'day_of_week';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
 
     public static function form(Schema $schema): Schema
     {
+        $dayOptions = collect(DayOfWeek::cases())
+            ->mapWithKeys(fn (DayOfWeek $d): array => [$d->value => $d->label()])
+            ->all();
+
         return $schema
             ->schema([
-                Forms\Components\Select::make('college_class_id')
-                    ->relationship('collegeClass', 'name')
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->live()
-                    ->afterStateUpdated(function (callable $set) {
-                        $set('subject_id', null);
-                    }),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\Select::make('college_class_id')
+                        ->label('Class')
+                        ->relationship('collegeClass', 'name')
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->live()
+                        ->afterStateUpdated(function (callable $set): void {
+                            $set('subject_id', null);
+                            $set('faculty_id', null);
+                        }),
 
-                Forms\Components\Select::make('subject_id')
-                    ->relationship('subject', 'name', function ($query, callable $get) {
-                        $collegeClassId = $get('college_class_id');
-                        if ($collegeClassId) {
-                            return $query->where('college_class_id', $collegeClassId);
-                        }
+                    Forms\Components\Select::make('academic_year_id')
+                        ->label('Academic Year')
+                        ->options(fn (): array => AcademicYear::orderByDesc('start_year')->pluck('name', 'id')->all())
+                        ->searchable()
+                        ->nullable(),
+                ]),
 
-                        return $query;
-                    })
-                    ->required()
-                    ->searchable()
-                    ->preload(),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\Select::make('subject_id')
+                        ->label('Subject')
+                        ->relationship('subject', 'name', fn ($query, callable $get) => $get('college_class_id')
+                            ? $query->where('college_class_id', $get('college_class_id'))
+                            : $query
+                        )
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->live()
+                        ->afterStateUpdated(fn (callable $set) => $set('faculty_id', null)),
 
-                Forms\Components\Select::make('faculty_id')
-                    ->relationship('faculty', 'employee_id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->user?->name ?? $record->employee_id)
-                    ->required()
-                    ->searchable()
-                    ->preload(),
+                    Forms\Components\Select::make('faculty_id')
+                        ->label('Faculty')
+                        ->relationship('faculty', 'employee_id', fn ($query, callable $get) => $get('subject_id')
+                            ? $query->whereHas('subjects', fn ($q) => $q->where('id', $get('subject_id')))
+                            : $query
+                        )
+                        ->getOptionLabelFromRecordUsing(fn ($record): string => $record->user?->name ?? $record->employee_id)
+                        ->required()
+                        ->searchable()
+                        ->preload(),
+                ]),
 
-                Forms\Components\Select::make('day')
-                    ->required()
-                    ->options([
-                        'Monday' => 'Monday',
-                        'Tuesday' => 'Tuesday',
-                        'Wednesday' => 'Wednesday',
-                        'Thursday' => 'Thursday',
-                        'Friday' => 'Friday',
-                        'Saturday' => 'Saturday',
-                    ]),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\Select::make('day_of_week')
+                        ->label('Day')
+                        ->options($dayOptions)
+                        ->required(),
 
-                Forms\Components\TextInput::make('period')
-                    ->numeric()
-                    ->required()
-                    ->minValue(1)
-                    ->maxValue(10),
+                    Forms\Components\TextInput::make('period_number')
+                        ->label('Period No.')
+                        ->numeric()
+                        ->required()
+                        ->minValue(1)
+                        ->maxValue(8),
+                ]),
 
-                Forms\Components\TextInput::make('room')
-                    ->optional()
-                    ->maxLength(50),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\TimePicker::make('start_time')
+                        ->label('Start Time')
+                        ->seconds(false)
+                        ->nullable(),
+
+                    Forms\Components\TimePicker::make('end_time')
+                        ->label('End Time')
+                        ->seconds(false)
+                        ->nullable(),
+                ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
+        $dayOptions = collect(DayOfWeek::cases())
+            ->mapWithKeys(fn (DayOfWeek $d): array => [$d->value => $d->label()])
+            ->all();
+
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('collegeClass.name')
@@ -102,30 +139,48 @@ class TimetableSlotResource extends Resource
 
                 Tables\Columns\TextColumn::make('faculty.user.name')
                     ->label('Faculty')
-                    ->sortable()
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('day')
+                Tables\Columns\TextColumn::make('day_of_week')
+                    ->label('Day')
+                    ->badge()
+                    ->formatStateUsing(fn (?DayOfWeek $state): string => $state?->label() ?? '—')
+                    ->color(fn (?DayOfWeek $state): string => $state?->color() ?? 'gray')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('period')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('period_number')
+                    ->label('Period')
+                    ->sortable()
+                    ->alignCenter(),
 
-                Tables\Columns\TextColumn::make('room'),
+                Tables\Columns\TextColumn::make('start_time')
+                    ->label('Start')
+                    ->placeholder('—'),
+
+                Tables\Columns\TextColumn::make('end_time')
+                    ->label('End')
+                    ->placeholder('—'),
+
+                Tables\Columns\TextColumn::make('academicYear.name')
+                    ->label('Academic Year')
+                    ->placeholder('—'),
             ])
-            ->defaultSort(fn ($query) => $query->orderBy('day')->orderBy('period'))
+            ->defaultSort(fn ($query) => $query
+                ->orderByRaw("CASE day_of_week WHEN 'monday' THEN 1 WHEN 'tuesday' THEN 2 WHEN 'wednesday' THEN 3 WHEN 'thursday' THEN 4 WHEN 'friday' THEN 5 WHEN 'saturday' THEN 6 ELSE 7 END")
+                ->orderBy('period_number')
+            )
             ->filters([
                 Tables\Filters\SelectFilter::make('college_class_id')
+                    ->label('Class')
                     ->relationship('collegeClass', 'name'),
-                Tables\Filters\SelectFilter::make('day')
-                    ->options([
-                        'Monday' => 'Monday',
-                        'Tuesday' => 'Tuesday',
-                        'Wednesday' => 'Wednesday',
-                        'Thursday' => 'Thursday',
-                        'Friday' => 'Friday',
-                        'Saturday' => 'Saturday',
-                    ]),
+
+                Tables\Filters\SelectFilter::make('day_of_week')
+                    ->label('Day')
+                    ->options($dayOptions),
+
+                Tables\Filters\SelectFilter::make('academic_year_id')
+                    ->label('Academic Year')
+                    ->options(fn (): array => AcademicYear::orderByDesc('start_year')->pluck('name', 'id')->all()),
             ])
             ->actions([
                 EditAction::make(),
@@ -140,9 +195,7 @@ class TimetableSlotResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

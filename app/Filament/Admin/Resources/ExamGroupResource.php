@@ -2,64 +2,85 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Enums\ExamGroupType;
 use App\Filament\Admin\Resources\ExamGroupResource\Pages\CreateExamGroup;
 use App\Filament\Admin\Resources\ExamGroupResource\Pages\EditExamGroup;
 use App\Filament\Admin\Resources\ExamGroupResource\Pages\ListExamGroups;
+use App\Models\AcademicYear;
 use App\Models\ExamGroup;
 use BackedEnum;
-use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Route;
 
 class ExamGroupResource extends Resource
 {
     protected static ?string $model = ExamGroup::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Examinations';
+    protected static string|\UnitEnum|null $navigationGroup = 'Examination';
+
+    protected static ?string $navigationLabel = 'Exam Groups';
+
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->label('Name (e.g. FA1, SA2)')
+                        ->required()
+                        ->maxLength(100),
 
-                Forms\Components\Select::make('college_class_id')
-                    ->relationship('collegeClass', 'name')
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->live()
-                    ->label('Class'),
+                    Forms\Components\Select::make('type')
+                        ->label('Type')
+                        ->options(collect(ExamGroupType::cases())->mapWithKeys(
+                            fn (ExamGroupType $t): array => [$t->value => $t->label()]
+                        ))
+                        ->nullable(),
+                ]),
 
-                Forms\Components\Select::make('exam_type')
-                    ->options([
-                        'marks' => 'Marks',
-                        'grades' => 'Grades',
-                    ])
-                    ->required(),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\Select::make('college_class_id')
+                        ->label('Class')
+                        ->relationship('collegeClass', 'name')
+                        ->required()
+                        ->searchable()
+                        ->preload(),
 
-                Forms\Components\DatePicker::make('start_date')
-                    ->nullable(),
+                    Forms\Components\Select::make('academic_year_id')
+                        ->label('Academic Year')
+                        ->options(fn (): array => AcademicYear::orderByDesc('start_year')->pluck('name', 'id')->all())
+                        ->searchable()
+                        ->nullable(),
+                ]),
 
-                Forms\Components\DatePicker::make('end_date')
-                    ->nullable(),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\DatePicker::make('conducted_date')
+                        ->label('Conducted Date')
+                        ->nullable(),
 
-                Forms\Components\Toggle::make('is_published')
-                    ->default(false),
+                    Forms\Components\Toggle::make('is_published')
+                        ->label('Published')
+                        ->default(false),
+                ]),
             ]);
     }
 
@@ -71,52 +92,72 @@ class ExamGroupResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Type')
+                    ->badge()
+                    ->formatStateUsing(fn (?ExamGroupType $state): string => $state?->shortLabel() ?? '—')
+                    ->color(fn (?ExamGroupType $state): string => $state?->color() ?? 'gray'),
+
                 Tables\Columns\TextColumn::make('collegeClass.name')
                     ->label('Class')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('exam_type')
-                    ->badge()
-                    ->formatStateUsing(fn (string $state): string => str($state)->headline()->toString())
-                    ->color(fn (string $state): string => $state === 'marks' ? 'info' : 'warning')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('academicYear.name')
+                    ->label('Academic Year')
+                    ->placeholder('—'),
 
-                Tables\Columns\TextColumn::make('start_date')
+                Tables\Columns\TextColumn::make('conducted_date')
+                    ->label('Conducted')
                     ->date()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('end_date')
-                    ->date()
+                    ->placeholder('—')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('is_published')
+                    ->label('Status')
                     ->badge()
-                    ->color(fn (bool $state): string => $state ? 'success' : 'gray')
-                    ->formatStateUsing(fn (bool $state): string => $state ? 'Published' : 'Draft'),
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Published' : 'Draft')
+                    ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
+
+                Tables\Columns\TextColumn::make('exams_count')
+                    ->label('Exams')
+                    ->counts('exams')
+                    ->sortable()
+                    ->alignCenter(),
             ])
+            ->defaultSort('name')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('college_class_id')
+                    ->label('Class')
+                    ->relationship('collegeClass', 'name'),
+
+                Tables\Filters\SelectFilter::make('type')
+                    ->label('Type')
+                    ->options(collect(ExamGroupType::cases())->mapWithKeys(
+                        fn (ExamGroupType $t): array => [$t->value => $t->shortLabel()]
+                    )),
+
+                Tables\Filters\SelectFilter::make('academic_year_id')
+                    ->label('Academic Year')
+                    ->options(fn (): array => AcademicYear::orderByDesc('start_year')->pluck('name', 'id')->all()),
             ])
             ->actions([
-                Action::make('manage_exams')
-                    ->label('Manage Exams')
-                    ->icon('heroicon-o-arrow-top-right-on-square')
-                    ->url(function (ExamGroup $record): string {
-                        $routeName = 'filament.admin.resources.exams.index';
+                \Filament\Actions\Action::make('publish')
+                    ->label('Publish Results')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Publish Exam Results')
+                    ->modalDescription('This will make results visible to students and parents. This cannot be easily undone.')
+                    ->hidden(fn (ExamGroup $record): bool => $record->is_published)
+                    ->action(function (ExamGroup $record): void {
+                        $record->update(['is_published' => true]);
 
-                        if (! Route::has($routeName)) {
-                            return '#';
-                        }
+                        Notification::make()
+                            ->title("Results for {$record->name} published successfully.")
+                            ->success()
+                            ->send();
+                    }),
 
-                        return route($routeName, [
-                            'tableFilters' => [
-                                'exam_group_id' => [
-                                    'value' => $record->getKey(),
-                                ],
-                            ],
-                        ]);
-                    })
-                    ->visible(fn (): bool => Route::has('filament.admin.resources.exams.index')),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
@@ -129,9 +170,7 @@ class ExamGroupResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

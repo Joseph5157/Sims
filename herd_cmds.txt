@@ -1,0 +1,56 @@
+completion           Dump the shell completion script
+composer             Proxy Composer commands with isolated site's PHP executable
+db                   Open the database for the current or given site, if credentials are found.
+directory-listing    Determine directory-listing behavior. Default is off, which means a 404 will display.
+edit                 Open the site in your favorite IDE.
+fetch-share-url      Get the URL to the current share tunnel for Expose
+forget               Remove the current working (or specified) directory from Herd's list of paths
+help                 Display help for a command
+ini                  Open the php.ini in your favorite IDE
+init                 Start the services defined in the Herd manifest file, and apply the configuration.
+isolate              Change the version of PHP used by Herd to serve the current working directory
+isolated             List all sites using isolated versions of PHP.
+link                 Link the current working directory to Herd
+links                Display all of the registered Herd links
+list                 List commands
+log                  Tail log file
+loopback             Get or set the loopback address used for Herd sites
+open                 Open the site for the current (or specified) directory in your browser
+park                 Register the current working (or specified) directory with Herd
+parked               Display all the current sites within parked paths
+paths                Get all of the paths registered with Herd
+php                  Proxy PHP commands with isolated site's PHP executable
+proxies              Display all of the proxy sites
+proxy                Create an Nginx proxy site for the specified host. Useful for docker, mailhog etc.
+restart              Restart the Herd services
+secure               Secure the given domain with a trusted TLS certificate
+secured              Display all of the currently secured sites
+share                Share the current site via an Expose tunnel
+site-information     Display information about the specified site
+sites                List all sites
+start                Start the Herd services
+stop                 Stop the Herd services
+tinker               Run tinker/Tinkerwell
+tld                  Get or set the TLD used for Herd sites.
+unisolate            Stop customizing the version of PHP used by Herd to serve the current working directory
+unlink               Remove the specified Herd link
+unproxy              Delete an Nginx proxy config.
+unsecure             Stop serving the given domain over HTTPS and remove the trusted TLS certificate
+use                  Change the version of PHP used by Herd
+which                Display which Herd driver serves the current working directory
+which-php            Get the PHP executable path for a given site
+debug:start          Start a debug session (Pro)
+debug:stop           Stop a debug session and display captured data (Pro)
+init:fresh           Initialize a Herd manifest file
+laravel:update       Update the Laravel Installer
+php:install          Install a PHP version
+php:list             List all PHP versions and their status
+php:update           Update a PHP version to the latest patch release
+services:available   List all available service types that can be created
+services:clone       Clone an existing service instance
+services:create      Create a new service instance
+services:delete      Delete a service and all its data
+services:list        List all installed services
+services:start       Start a service
+services:stop        Stop a service
+services:versions    List all available versions for a service type

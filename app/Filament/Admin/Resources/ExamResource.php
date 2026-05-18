@@ -23,29 +23,36 @@ class ExamResource extends Resource
 {
     protected static ?string $model = Exam::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-pencil-square';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Examinations';
+    protected static string|\UnitEnum|null $navigationGroup = 'Examination';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?string $navigationLabel = 'Exams';
+
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $recordTitleAttribute = 'id';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->schema([
                 Forms\Components\Select::make('exam_group_id')
+                    ->label('Exam Group')
                     ->relationship('examGroup', 'name')
                     ->required()
                     ->searchable()
                     ->preload()
                     ->live()
-                    ->afterStateUpdated(function (callable $set): void {
-                        $set('subject_id', null);
-                    }),
+                    ->afterStateUpdated(fn (callable $set) => $set('subject_id', null)),
 
                 Forms\Components\Select::make('subject_id')
+                    ->label('Subject')
                     ->relationship('subject', 'name', function ($query, Get $get) {
                         $examGroupId = $get('exam_group_id');
 
@@ -66,26 +73,18 @@ class ExamResource extends Resource
                     ->searchable()
                     ->preload(),
 
-                Forms\Components\DatePicker::make('date')
-                    ->nullable(),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\TextInput::make('maximum_marks')
+                        ->label('Max Marks')
+                        ->numeric()
+                        ->default(50)
+                        ->required()
+                        ->minValue(1),
 
-                Forms\Components\TimePicker::make('start_time')
-                    ->nullable(),
-
-                Forms\Components\TimePicker::make('end_time')
-                    ->nullable(),
-
-                Forms\Components\TextInput::make('maximum_marks')
-                    ->numeric()
-                    ->required(),
-
-                Forms\Components\TextInput::make('minimum_marks')
-                    ->numeric()
-                    ->required(),
-
-                Forms\Components\TextInput::make('weightage')
-                    ->numeric()
-                    ->default(1),
+                    Forms\Components\DatePicker::make('date')
+                        ->label('Exam Date')
+                        ->nullable(),
+                ]),
             ]);
     }
 
@@ -103,20 +102,28 @@ class ExamResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('date')
-                    ->date()
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('maximum_marks')
+                    ->label('Max Marks')
                     ->numeric()
+                    ->sortable()
+                    ->alignCenter(),
+
+                Tables\Columns\TextColumn::make('date')
+                    ->label('Exam Date')
+                    ->date()
+                    ->placeholder('—')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('minimum_marks')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('exam_scores_count')
+                    ->label('Scores Entered')
+                    ->counts('examScores')
+                    ->sortable()
+                    ->alignCenter(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('exam_group_id')
+                    ->label('Exam Group')
                     ->relationship('examGroup', 'name'),
             ])
             ->actions([
@@ -132,9 +139,7 @@ class ExamResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

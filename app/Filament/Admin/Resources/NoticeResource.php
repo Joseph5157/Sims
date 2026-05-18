@@ -34,16 +34,17 @@ class NoticeResource extends Resource
                     ->required()
                     ->maxLength(255),
 
-                Forms\Components\RichEditor::make('content')
+                Forms\Components\RichEditor::make('body')
                     ->required()
                     ->columnSpanFull(),
 
-                Forms\Components\Select::make('department_id')
-                    ->relationship('department', 'name')
+                Forms\Components\Select::make('college_class_id')
+                    ->label('Class')
+                    ->relationship('collegeClass', 'name')
                     ->optional()
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Departments'),
+                    ->placeholder('All Classes'),
 
                 Forms\Components\DatePicker::make('expires_at')
                     ->optional(),
@@ -58,10 +59,10 @@ class NoticeResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('department.name')
-                    ->label('Department')
+                Tables\Columns\TextColumn::make('collegeClass.name')
+                    ->label('Class')
                     ->sortable()
-                    ->default('All Departments'),
+                    ->default('All Classes'),
 
                 Tables\Columns\TextColumn::make('expires_at')
                     ->date()
@@ -75,8 +76,10 @@ class NoticeResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('department_id')
-                    ->relationship('department', 'name'),
+                Tables\Filters\SelectFilter::make('college_class_id')
+                    ->label('Class')
+                    ->relationship('collegeClass', 'name')
+                    ->preload(),
             ])
             ->actions([
                 \Filament\Actions\EditAction::make(),

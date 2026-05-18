@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(grep *)",
+      "Bash(where php:*)",
+      "Bash(/c/Users/sikha/.config/herd/bin/php.bat:*)",
+      "Bash(sqlite3:*)",
+      "Bash(cmd:*)",
+      "Bash(/c/Users/sikha/Herd/bin/php84/php artisan:*)",
+      "Read(//usr/local/**)",
+      "Read(//c/Program Files/**)",
+      "Bash(\"C:/Users/sikha/.config/herd/bin/php84/php.exe\" artisan:*)",
+      "Bash(C:/Users/sikha/.config/herd/bin/php84/php.exe -r ':*)"
+    ]
+  }
+}
