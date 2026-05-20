@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Middleware\InitializeTenancyForLivewireRequests;
+use App\Http\Middleware\PreventAccessFromCentralDomains;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
@@ -118,7 +119,7 @@ class TenancyServiceProvider extends ServiceProvider
     {
         $tenancyMiddleware = [
             InitializeTenancyForLivewireRequests::class,
-            Middleware\PreventAccessFromCentralDomains::class,
+            PreventAccessFromCentralDomains::class,
             Middleware\InitializeTenancyByDomain::class,
             Middleware\InitializeTenancyBySubdomain::class,
             Middleware\InitializeTenancyByDomainOrSubdomain::class,
