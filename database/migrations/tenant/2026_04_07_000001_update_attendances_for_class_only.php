@@ -12,13 +12,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('attendances', function (Blueprint $table) {
-            if (Schema::hasColumn('attendances', 'subject_id')) {
-                $table->dropUnique(['student_id', 'subject_id', 'date']);
+        if (Schema::hasColumn('attendances', 'subject_id')) {
+            // MySQL requires dropping the foreign key BEFORE dropping a unique
+            // index that covers the same column; they must be separate calls.
+            Schema::table('attendances', function (Blueprint $table) {
                 $table->dropForeign(['subject_id']);
+            });
+            Schema::table('attendances', function (Blueprint $table) {
+                $table->dropUnique(['student_id', 'subject_id', 'date']);
                 $table->dropColumn('subject_id');
-            }
+            });
+        }
 
+        Schema::table('attendances', function (Blueprint $table) {
             if (Schema::hasColumn('attendances', 'date')) {
                 $table->renameColumn('date', 'attendance_date');
             }
