@@ -15,13 +15,28 @@ final class CentralDomains
                 'localhost',
                 'laravel-new-college-portal.test',
             ],
-            self::domainsFromCsv(env('CENTRAL_DOMAINS')),
-            self::domainsFromUrl(env('APP_URL')),
-            self::domainsFromHost(env('RAILWAY_PUBLIC_DOMAIN')),
-            self::domainsFromHost(env('RAILWAY_STATIC_URL')),
+            self::domainsFromCsv(self::getEnv('CENTRAL_DOMAINS')),
+            self::domainsFromUrl(self::getEnv('APP_URL')),
+            self::domainsFromHost(self::getEnv('RAILWAY_PUBLIC_DOMAIN')),
+            self::domainsFromHost(self::getEnv('RAILWAY_STATIC_URL')),
         );
 
         return array_values(array_unique(array_filter($domains)));
+    }
+
+    /**
+     * Read env var from OS environment first (bypasses phpdotenv $_ENV overwrite),
+     * falling back to Laravel's env() helper for local .env file values.
+     */
+    private static function getEnv(string $key): ?string
+    {
+        $value = getenv($key);
+
+        if ($value !== false && $value !== '') {
+            return $value;
+        }
+
+        return env($key);
     }
 
     /**
