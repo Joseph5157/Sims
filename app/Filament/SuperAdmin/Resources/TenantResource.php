@@ -30,7 +30,7 @@ class TenantResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'id';
 
-    public static function canViewAny(): bool
+    public static function can(string $action, \Illuminate\Database\Eloquent\Model|string|null $record = null): bool
     {
         return auth()->user()?->is_super_admin === true;
     }
