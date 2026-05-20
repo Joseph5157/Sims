@@ -24,7 +24,5 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
-    Route::redirect('/', '/admin');
-
     Route::get('/impersonate/{token}', TenantImpersonateController::class)->name('tenant.impersonate');
 });
