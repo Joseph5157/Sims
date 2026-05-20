@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Route;
-use Stancl\Tenancy\Features\UserImpersonation;
+use App\Http\Controllers\TenantImpersonateController;
 use App\Http\Middleware\PreventAccessFromCentralDomains;
+use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
 /*
@@ -24,11 +24,7 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
-    Route::get('/', function () {
-        return 'This is your multi-tenant application. The id of the current tenant is '.tenant('id');
-    });
+    Route::redirect('/', '/admin');
 
-    Route::get('/impersonate/{token}', function (string $token) {
-        return UserImpersonation::makeResponse($token);
-    })->name('tenant.impersonate');
+    Route::get('/impersonate/{token}', TenantImpersonateController::class)->name('tenant.impersonate');
 });
