@@ -8,13 +8,17 @@ RUN npm run build
 FROM php:8.4-cli-bookworm
 WORKDIR /app
 
-# Install required system packages and PHP extensions
+# Install required system packages and PHP extensions.
+# Only install extensions that are NOT already built into the official PHP image.
+# Built-ins (no install needed): ctype, dom, fileinfo, filter, hash, openssl,
+#   pcre, session, tokenizer, xml, curl, mbstring, pdo
 RUN apt-get update && apt-get install -y \
     git unzip zip curl \
-    libfreetype6-dev libjpeg62-turbo-dev libpng-dev libicu-dev libzip-dev libcurl4-openssl-dev \
+    libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
+    libicu-dev libzip-dev libxml2-dev libcurl4-openssl-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-    exif gd intl zip bcmath ctype curl dom fileinfo filter hash mbstring openssl pcre pdo pdo_mysql session tokenizer xml \
+    exif gd intl zip bcmath mbstring pdo pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
