@@ -30,6 +30,11 @@ class TenantResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'id';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->is_super_admin === true;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
