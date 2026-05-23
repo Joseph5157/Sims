@@ -17,8 +17,6 @@ final class CentralDomains
             ],
             self::domainsFromCsv(self::getEnv('CENTRAL_DOMAINS')),
             self::domainsFromUrl(self::getEnv('APP_URL')),
-            self::domainsFromHost(self::getEnv('RAILWAY_PUBLIC_DOMAIN')),
-            self::domainsFromHost(self::getEnv('RAILWAY_STATIC_URL')),
         );
 
         return array_values(array_unique(array_filter($domains)));
