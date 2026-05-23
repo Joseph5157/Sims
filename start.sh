@@ -24,5 +24,12 @@ if [ -n "${DEMO_TENANT_DOMAIN}" ] && [ -n "${DEMO_TENANT_NAME}" ]; then
         || echo "    (tenant already exists or creation skipped)"
 fi
 
+# One-time tenant seed: set SEED_TENANT_ID=1002 in Railway vars, then remove after deploy
+if [ -n "${SEED_TENANT_ID}" ]; then
+    echo "==> Seeding tenant [${SEED_TENANT_ID}]..."
+    php artisan tenants:seed --tenants="${SEED_TENANT_ID}" --force \
+        || echo "    (seed failed or skipped)"
+fi
+
 echo "==> Starting PHP server..."
 exec php -S 0.0.0.0:${PORT:-8000} -t public
