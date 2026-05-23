@@ -90,6 +90,7 @@ class TenantResource extends Resource
                         Artisan::call('tenants:seed', [
                             '--class' => 'TenantDatabaseSeeder',
                             '--tenants' => [$record->id],
+                            '--force'   => true,
                         ]);
 
                         Notification::make()
