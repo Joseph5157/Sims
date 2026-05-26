@@ -121,6 +121,7 @@ class DisciplineCaseResource extends Resource
                     ->date()
                     ->sortable(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['student.user', 'faculty.user']))
             ->filters([
                 Tables\Filters\SelectFilter::make('severity')
                     ->options([

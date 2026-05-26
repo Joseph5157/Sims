@@ -133,6 +133,7 @@ class UserResource extends Resource
                     ->date()
                     ->sortable(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['roles', 'studentProfile', 'facultyProfile', 'guardianProfile']))
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('role')

@@ -95,6 +95,7 @@ class CourseResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['department', 'collegeClass', 'faculty.user', 'media']))
             ->filters([
                 //
             ])

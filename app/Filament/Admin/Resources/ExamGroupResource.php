@@ -124,6 +124,7 @@ class ExamGroupResource extends Resource
                     ->sortable()
                     ->alignCenter(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['collegeClass', 'academicYear']))
             ->defaultSort('name')
             ->filters([
                 Tables\Filters\SelectFilter::make('college_class_id')

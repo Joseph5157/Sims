@@ -75,6 +75,7 @@ class NoticeResource extends Resource
                     ->label('Created By')
                     ->sortable(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['collegeClass', 'creator']))
             ->filters([
                 Tables\Filters\SelectFilter::make('college_class_id')
                     ->label('Class')

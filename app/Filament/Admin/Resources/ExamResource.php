@@ -120,6 +120,7 @@ class ExamResource extends Resource
                     ->sortable()
                     ->alignCenter(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['examGroup', 'subject']))
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('exam_group_id')

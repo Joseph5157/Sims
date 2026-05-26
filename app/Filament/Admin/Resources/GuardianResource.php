@@ -113,6 +113,7 @@ class GuardianResource extends Resource
                     ->color(fn ($state): string => (bool) $state ? 'success' : 'gray')
                     ->formatStateUsing(fn ($state): string => (bool) $state ? 'Primary' : 'No'),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['student.user']))
             ->filters([
                 //
             ])

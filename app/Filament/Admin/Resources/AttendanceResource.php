@@ -98,6 +98,7 @@ class AttendanceResource extends Resource
                     ->placeholder('—')
                     ->tooltip(fn (Attendance $record): ?string => $record->edit_reason),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['student.user', 'collegeClass', 'markedBy']))
             ->defaultSort('attendance_date', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('college_class_id')

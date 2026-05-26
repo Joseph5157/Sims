@@ -108,6 +108,7 @@ class ExamScoreResource extends Resource
                     ->color(fn ($state, ExamScore $record): string => $record->getPercentage() >= 75 ? 'success' : ($record->getPercentage() >= 50 ? 'warning' : 'danger'))
                     ->formatStateUsing(fn ($state, ExamScore $record): string => number_format($record->getPercentage(), 2).'%'),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['exam.examGroup', 'exam.subject', 'student.user']))
             ->filters([
                 Tables\Filters\SelectFilter::make('exam_id')
                     ->relationship('exam', 'id'),

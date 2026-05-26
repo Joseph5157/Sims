@@ -207,6 +207,7 @@ class AttendanceResource extends Resource
                         'info' => 'excused',
                     ]),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['student.user', 'collegeClass']))
             ->defaultSort('attendance_date', 'desc')
             ->headerActions([
                 ExportAction::make()

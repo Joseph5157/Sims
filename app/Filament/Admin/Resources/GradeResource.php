@@ -94,6 +94,7 @@ class GradeResource extends Resource
                     ->numeric()
                     ->sortable(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['student.user', 'subject']))
             ->filters([
                 Tables\Filters\SelectFilter::make('subject_id')
                     ->relationship('subject', 'name'),

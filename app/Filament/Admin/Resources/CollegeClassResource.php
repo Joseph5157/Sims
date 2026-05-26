@@ -91,6 +91,7 @@ class CollegeClassResource extends Resource
                     ->sortable()
                     ->alignCenter(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['department', 'academicYear']))
             ->defaultSort('name')
             ->filters([
                 Tables\Filters\SelectFilter::make('department_id')

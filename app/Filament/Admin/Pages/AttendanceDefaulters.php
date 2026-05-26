@@ -147,7 +147,13 @@ class AttendanceDefaulters extends Page implements HasForms
 
                         if ($guardian && $guardian->email) {
                             Mail::to($guardian->email)
-                                ->send(new AttendanceWarningMail($student, $guardian));
+                                ->send(new AttendanceWarningMail(
+                                    $student,
+                                    $guardian,
+                                    (float) $student->attendance_percentage,
+                                    (int) $student->absent_count,
+                                    (int) $student->total_count,
+                                ));
                             $sent++;
                         } else {
                             $skipped++;
@@ -185,7 +191,13 @@ class AttendanceDefaulters extends Page implements HasForms
         }
 
         Mail::to($guardian->email)
-            ->send(new AttendanceWarningMail($student, $guardian));
+            ->send(new AttendanceWarningMail(
+                $student,
+                $guardian,
+                (float) $student->attendance_percentage,
+                (int) $student->absent_count,
+                (int) $student->total_count,
+            ));
 
         Notification::make()
             ->title('Warning email sent to '.$guardian->fullName().' ('.$guardian->email.')')

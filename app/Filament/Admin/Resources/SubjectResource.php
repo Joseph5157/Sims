@@ -139,6 +139,7 @@ class SubjectResource extends Resource
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
                     ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['collegeClass', 'faculty']))
             ->defaultSort('name')
             ->filters([
                 Tables\Filters\SelectFilter::make('subject_type')

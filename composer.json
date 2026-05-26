@@ -17,6 +17,7 @@
         "filament/spatie-laravel-media-library-plugin": "4.9.3",
         "laravel/framework": "^13.0",
         "laravel/octane": "*",
+        "spatie/laravel-flare": "^1.0",
         "laravel/tinker": "^3.0",
         "maatwebsite/excel": "*",
         "spatie/laravel-medialibrary": "*",

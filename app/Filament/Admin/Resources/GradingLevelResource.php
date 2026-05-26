@@ -123,6 +123,7 @@ class GradingLevelResource extends Resource
                     ->placeholder('Global')
                     ->sortable(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['academicYear']))
             ->defaultSort('min_score', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('type')

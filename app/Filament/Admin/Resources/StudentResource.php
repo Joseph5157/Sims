@@ -202,6 +202,7 @@ class StudentResource extends Resource
                     ->formatStateUsing(fn (StudentStatus $state): string => $state->label())
                     ->color(fn (StudentStatus $state): string => $state->color()),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['user', 'collegeClass', 'department']))
             ->defaultSort('roll_number')
             ->filters([
                 Tables\Filters\SelectFilter::make('college_class_id')

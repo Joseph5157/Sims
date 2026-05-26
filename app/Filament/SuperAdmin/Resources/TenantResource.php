@@ -64,12 +64,13 @@ class TenantResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('domain')
                     ->label('Domain')
-                    ->state(fn (Tenant $record): ?string => $record->domains()->value('domain'))
+                    ->state(fn (Tenant $record): ?string => $record->domains->first()?->domain)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['domains']))
             ->defaultSort('created_at', 'desc')
             ->recordUrl(null)
             ->actions([

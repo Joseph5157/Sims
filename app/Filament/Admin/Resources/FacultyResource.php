@@ -148,6 +148,7 @@ class FacultyResource extends Resource
                     ->sortable()
                     ->alignCenter(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['user', 'department']))
             ->defaultSort('employee_id')
             ->filters([
                 Tables\Filters\SelectFilter::make('department_id')
