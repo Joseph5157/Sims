@@ -76,6 +76,9 @@ class AttendanceDefaulters extends Page implements HasForms
         $classId = $this->filters['college_class_id'] ?? null;
         $yearId = $this->filters['academic_year_id'] ?? null;
 
+        // Aggregate attendance per student using confirmed column names:
+        // status values: present, absent, late, excused
+        // present_count = present + late + excused; absent_count = absent only
         $attendanceQuery = DB::table('attendances')
             ->selectRaw("
                 student_id,
@@ -84,7 +87,7 @@ class AttendanceDefaulters extends Page implements HasForms
                 COUNT(*) as total_count
             ")
             ->groupBy('student_id')
-            ->havingRaw('total_count > 0 AND (present_count * 100.0 / total_count) < 75');
+            ->havingRaw('total_count > 0 AND (CAST(present_count AS REAL) / total_count * 100) < 75');
 
         if ($classId) {
             $attendanceQuery->where('college_class_id', $classId);
@@ -121,6 +124,8 @@ class AttendanceDefaulters extends Page implements HasForms
                     ? round($present / $total * 100, 1)
                     : 0.0;
 
+                // Days of consecutive 100% attendance needed to reach 75%
+                // Formula: ceil(3 × absent − present)
                 $student->shortfall = max(0, (int) ceil(3 * $absent - $present));
 
                 return $student;
@@ -147,13 +152,7 @@ class AttendanceDefaulters extends Page implements HasForms
 
                         if ($guardian && $guardian->email) {
                             Mail::to($guardian->email)
-                                ->send(new AttendanceWarningMail(
-                                    $student,
-                                    $guardian,
-                                    (float) $student->attendance_percentage,
-                                    (int) $student->absent_count,
-                                    (int) $student->total_count,
-                                ));
+                                ->send(new AttendanceWarningMail($student, $guardian));
                             $sent++;
                         } else {
                             $skipped++;
@@ -170,6 +169,9 @@ class AttendanceDefaulters extends Page implements HasForms
         ];
     }
 
+    /**
+     * Called via wire:click from the Blade view to notify a single student's guardian.
+     */
     public function notifyParent(int $studentId): void
     {
         $student = $this->defaulters->firstWhere('id', $studentId);
@@ -191,13 +193,7 @@ class AttendanceDefaulters extends Page implements HasForms
         }
 
         Mail::to($guardian->email)
-            ->send(new AttendanceWarningMail(
-                $student,
-                $guardian,
-                (float) $student->attendance_percentage,
-                (int) $student->absent_count,
-                (int) $student->total_count,
-            ));
+            ->send(new AttendanceWarningMail($student, $guardian));
 
         Notification::make()
             ->title('Warning email sent to '.$guardian->fullName().' ('.$guardian->email.')')

@@ -69,6 +69,7 @@ class TenantDatabaseSeeder extends Seeder
         $facultyRole = Role::firstOrCreate(['name' => 'faculty', 'guard_name' => 'web']);
         $studentRole = Role::firstOrCreate(['name' => 'student', 'guard_name' => 'web']);
         $parentRole = Role::firstOrCreate(['name' => 'parent',  'guard_name' => 'web']);
+
         $adminRole->syncPermissions(Permission::all());
 
         // ── 2. School settings ──────────────────────────────────────────────

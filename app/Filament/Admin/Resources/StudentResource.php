@@ -19,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class StudentResource extends Resource
 {
@@ -156,6 +157,23 @@ class StudentResource extends Resource
                             ->maxLength(255),
                     ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        // Faculty members can only see students from their assigned classes
+        if ($user?->hasRole('faculty')) {
+            $query->whereHas('collegeClass', function (Builder $q) use ($user) {
+                $q->whereHas('faculty', function (Builder $fq) use ($user) {
+                    $fq->where('user_id', $user->id);
+                });
+            });
+        }
+
+        return $query;
     }
 
     public static function table(Table $table): Table
