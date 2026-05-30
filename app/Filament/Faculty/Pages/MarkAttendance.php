@@ -152,6 +152,13 @@ class MarkAttendance extends Page
         }
     }
 
+    public function markAllLate(): void
+    {
+        foreach ($this->students as $student) {
+            $this->attendance[$student['id']] = 'late';
+        }
+    }
+
     public function submit(): void
     {
         if (! $this->selectedClassId || empty($this->students)) {
