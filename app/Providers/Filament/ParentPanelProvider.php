@@ -10,6 +10,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -23,6 +24,24 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 class ParentPanelProvider extends PanelProvider
 {
+    protected static function renderCompiledStylesheetLink(): string
+    {
+        $manifestPath = public_path('build/manifest.json');
+
+        if (! file_exists($manifestPath)) {
+            return '';
+        }
+
+        $manifest = json_decode(file_get_contents($manifestPath), true);
+        $cssFile = $manifest['resources/css/app.css']['file'] ?? null;
+
+        if (! is_string($cssFile) || $cssFile === '') {
+            return '';
+        }
+
+        return '<link rel="stylesheet" href="'.asset('build/assets/'.basename($cssFile)).'">';
+    }
+
     public function panel(Panel $panel): Panel
     {
         $panel = $panel
@@ -33,6 +52,10 @@ class ParentPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Teal,
             ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => static::renderCompiledStylesheetLink(),
+            )
             ->pages([
                 ParentDashboard::class,
             ])

@@ -7,6 +7,10 @@ use App\Filament\Admin\Resources\DepartmentResource\Pages\EditDepartment;
 use App\Filament\Admin\Resources\DepartmentResource\Pages\ListDepartments;
 use App\Models\Department;
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -15,7 +19,7 @@ use Filament\Tables\Table;
 
 class DepartmentResource extends Resource
 {
-    protected static ?string $model = \App\Models\Department::class;
+    protected static ?string $model = Department::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
 
@@ -24,6 +28,11 @@ class DepartmentResource extends Resource
     protected static ?int $navigationSort = 2;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -40,7 +49,8 @@ class DepartmentResource extends Resource
 
                 Forms\Components\Textarea::make('description')
                     ->nullable()
-                    ->maxLength(65535),
+                    ->maxLength(65535)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -53,27 +63,36 @@ class DepartmentResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('code')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('students_count')
+                    ->label('Students')
+                    ->counts('students')
+                    ->sortable()
+                    ->alignCenter(),
+
+                Tables\Columns\TextColumn::make('faculties_count')
+                    ->label('Faculty')
+                    ->counts('faculties')
+                    ->sortable()
+                    ->alignCenter(),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->actions([
-                \Filament\Actions\EditAction::make(),
-                \Filament\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

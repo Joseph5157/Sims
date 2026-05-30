@@ -30,6 +30,11 @@ class TenantResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'id';
 
+    public static function can(string $action, \Illuminate\Database\Eloquent\Model|string|null $record = null): bool
+    {
+        return auth()->user()?->is_super_admin === true;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -59,13 +64,15 @@ class TenantResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('domain')
                     ->label('Domain')
-                    ->state(fn (Tenant $record): ?string => $record->domains()->value('domain'))
+                    ->state(fn (Tenant $record): ?string => $record->domains->first()?->domain)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['domains']))
             ->defaultSort('created_at', 'desc')
+            ->recordUrl(null)
             ->actions([
                 Action::make('runMigrations')
                     ->label('Run Migrations')
@@ -85,6 +92,7 @@ class TenantResource extends Resource
                         Artisan::call('tenants:seed', [
                             '--class' => 'TenantDatabaseSeeder',
                             '--tenants' => [$record->id],
+                            '--force'   => true,
                         ]);
 
                         Notification::make()
@@ -110,7 +118,7 @@ class TenantResource extends Resource
                             tenancy()->initialize($record);
 
                             $tenantAdminId = (string) User::query()
-                                ->where('email', 'admin@example.com')
+                                ->whereHas('roles', fn ($query) => $query->where('name', 'admin'))
                                 ->value('id');
                         } finally {
                             tenancy()->end();
@@ -118,7 +126,7 @@ class TenantResource extends Resource
 
                         if ($tenantAdminId === '') {
                             Notification::make()
-                                ->title('Tenant admin user not found (admin@example.com).')
+                                ->title('Tenant admin user not found.')
                                 ->danger()
                                 ->send();
 

@@ -12,13 +12,66 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('attendances', function (Blueprint $table) {
-            if (Schema::hasColumn('attendances', 'subject_id')) {
-                $table->dropUnique(['student_id', 'subject_id', 'date']);
-                $table->dropForeign(['subject_id']);
-                $table->dropColumn('subject_id');
+        if (Schema::hasColumn('attendances', 'subject_id')) {
+            // Check if a true FK constraint exists (some deployments only have an index).
+            $db = Schema::getConnection()->getDatabaseName();
+            $hasFk = DB::table('information_schema.KEY_COLUMN_USAGE')
+                ->where('TABLE_SCHEMA', $db)
+                ->where('TABLE_NAME', 'attendances')
+                ->where('CONSTRAINT_NAME', 'attendances_subject_id_foreign')
+                ->whereNotNull('REFERENCED_TABLE_NAME')
+                ->exists();
+
+            if ($hasFk) {
+                // MySQL requires dropping the foreign key BEFORE dropping a unique
+                // index that covers the same column; they must be separate calls.
+                Schema::table('attendances', function (Blueprint $table) {
+                    $table->dropForeign(['subject_id']);
+                });
+            } else {
+                // Only a plain index exists — drop it directly.
+                $hasIndex = DB::table('information_schema.STATISTICS')
+                    ->where('TABLE_SCHEMA', $db)
+                    ->where('TABLE_NAME', 'attendances')
+                    ->where('INDEX_NAME', 'attendances_subject_id_foreign')
+                    ->exists();
+                if ($hasIndex) {
+                    Schema::table('attendances', function (Blueprint $table) {
+                        $table->dropIndex('attendances_subject_id_foreign');
+                    });
+                }
             }
 
+            // The composite unique index (student_id, subject_id, date) may be the
+            // only index covering student_id, causing MySQL to refuse dropping it
+            // while the student_id FK exists. Drop the FK first, then restore it.
+            $hasStudentFk = DB::table('information_schema.KEY_COLUMN_USAGE')
+                ->where('TABLE_SCHEMA', $db)
+                ->where('TABLE_NAME', 'attendances')
+                ->where('CONSTRAINT_NAME', 'attendances_student_id_foreign')
+                ->whereNotNull('REFERENCED_TABLE_NAME')
+                ->exists();
+
+            if ($hasStudentFk) {
+                Schema::table('attendances', function (Blueprint $table) {
+                    $table->dropForeign(['student_id']);
+                });
+            }
+
+            Schema::table('attendances', function (Blueprint $table) {
+                $table->dropUnique(['student_id', 'subject_id', 'date']);
+                $table->dropColumn('subject_id');
+            });
+
+            // Re-add the student_id FK if it was dropped above.
+            if ($hasStudentFk) {
+                Schema::table('attendances', function (Blueprint $table) {
+                    $table->foreign('student_id')->references('id')->on('students')->cascadeOnDelete();
+                });
+            }
+        }
+
+        Schema::table('attendances', function (Blueprint $table) {
             if (Schema::hasColumn('attendances', 'date')) {
                 $table->renameColumn('date', 'attendance_date');
             }

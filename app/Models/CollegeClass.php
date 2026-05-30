@@ -17,11 +17,17 @@ class CollegeClass extends Model
         'department_id',
         'semester',
         'academic_year',
+        'academic_year_id',
     ];
 
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class);
     }
 
     public function students(): HasMany

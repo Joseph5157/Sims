@@ -39,8 +39,8 @@ class StatsOverviewWidget extends BaseWidget
                 Notice::query()
                     ->where(function ($query): void {
                         $query
-                            ->whereNull('expires_at')
-                            ->orWhere('expires_at', '>', now());
+                            ->whereNull('published_at')
+                            ->orWhere('published_at', '<=', now());
                     })
                     ->count(),
             )

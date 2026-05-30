@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\Gender;
+use App\Enums\StudentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -15,47 +19,73 @@ class Student extends Model implements HasMedia
     protected $fillable = [
         'user_id',
         'roll_number',
+        'admission_number',
         'department_id',
         'college_class_id',
+        'academic_year_id',
         'date_of_birth',
+        'gender',
+        'blood_group',
         'phone',
         'address',
         'admission_year',
+        'status',
     ];
 
-    public function user()
+    protected $casts = [
+        'date_of_birth' => 'date',
+        'gender' => Gender::class,
+        'status' => StudentStatus::class,
+    ];
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function department()
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
-    public function collegeClass()
+    public function collegeClass(): BelongsTo
     {
         return $this->belongsTo(CollegeClass::class, 'college_class_id');
     }
 
-    public function disciplineCases()
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
+
+    public function disciplineCases(): HasMany
     {
         return $this->hasMany(DisciplineCase::class);
     }
 
-    public function attendances()
+    public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
     }
 
-    public function grades()
+    public function grades(): HasMany
     {
         return $this->hasMany(Grade::class);
     }
 
-    public function guardians()
+    public function guardians(): HasMany
     {
         return $this->hasMany(Guardian::class);
+    }
+
+    public function feePayments(): HasMany
+    {
+        return $this->hasMany(FeePayment::class);
+    }
+
+    public function feeDiscounts(): HasMany
+    {
+        return $this->hasMany(FeeDiscount::class);
     }
 
     public function subjects()
@@ -72,16 +102,19 @@ class Student extends Model implements HasMedia
 
     public function getAttendancePercentage(): float
     {
-        $attendances = $this->attendances()->get();
+        $totalMarked = $this->attendances()
+            ->whereIn('status', ['present', 'late', 'excused', 'absent'])
+            ->count();
 
-        $total = $attendances->count();
-        if ($total === 0) {
-            return 0;
+        if ($totalMarked === 0) {
+            return 0.0;
         }
 
-        $present = $attendances->where('status', 'present')->count();
+        $present = $this->attendances()
+            ->whereIn('status', ['present', 'late', 'excused'])
+            ->count();
 
-        return round(($present / $total) * 100, 1);
+        return round(($present / $totalMarked) * 100, 1);
     }
 
     public function getDaysNeededForAttendanceThreshold(float $threshold = 75.0): int
@@ -131,5 +164,35 @@ class Student extends Model implements HasMedia
 
                 return $percentage < $threshold;
             });
+    }
+
+    public function getOutstandingAmount(): float
+    {
+        $structures = FeeStructure::where('college_class_id', $this->college_class_id)->get();
+
+        $outstanding = 0.0;
+
+        foreach ($structures as $structure) {
+            $paid = (float) $this->feePayments()
+                ->where('fee_structure_id', $structure->id)
+                ->sum('amount_paid');
+
+            $discountFixed = (float) $this->feeDiscounts()
+                ->where('fee_structure_id', $structure->id)
+                ->whereNotNull('amount')
+                ->sum('amount');
+
+            $discountPct = (float) $this->feeDiscounts()
+                ->where('fee_structure_id', $structure->id)
+                ->whereNotNull('percentage')
+                ->sum('percentage');
+
+            $discountFromPct = ($structure->amount * $discountPct) / 100;
+            $effectiveAmount = max(0, (float) $structure->amount - $discountFixed - $discountFromPct);
+
+            $outstanding += max(0, $effectiveAmount - $paid);
+        }
+
+        return round($outstanding, 2);
     }
 }

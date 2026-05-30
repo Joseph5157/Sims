@@ -2,70 +2,160 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\StudentResource\Pages;
-use App\Filament\Admin\Resources\StudentResource\RelationManagers;
+use App\Enums\Gender;
+use App\Enums\StudentStatus;
+use App\Filament\Admin\Resources\StudentResource\Pages\CreateStudent;
+use App\Filament\Admin\Resources\StudentResource\Pages\EditStudent;
+use App\Filament\Admin\Resources\StudentResource\Pages\ListStudents;
+use App\Models\AcademicYear;
 use App\Models\Student;
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
-use Illuminate\Support\Facades\Date;
 
 class StudentResource extends Resource
 {
     protected static ?string $model = Student::class;
 
-    // Must match Filament v4's HasNavigation trait property type.
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::Users;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'People';
+
+    protected static ?string $navigationLabel = 'Students';
+
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $recordTitleAttribute = 'roll_number';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->schema([
-                Forms\Components\Select::make('user_id')
-                    ->relationship('user', 'name')
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->label('User'),
-                Forms\Components\TextInput::make('roll_number')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255),
-                Forms\Components\Select::make('department_id')
-                    ->relationship('department', 'name')
-                    ->required(),
-                Forms\Components\Select::make('college_class_id')
-                    ->relationship('collegeClass', 'name')
-                    ->required(),
-                Forms\Components\DatePicker::make('date_of_birth')
-                    ->nullable(),
-                Forms\Components\TextInput::make('phone')
-                    ->tel()
-                    ->nullable()
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('address')
-                    ->nullable()
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('admission_year')
-                    ->required()
-                    ->numeric()
-                    ->minValue(2000)
-                    ->maxValue(now()->year + 1)
-                    ->helperText('Start year (e.g. 2026).'),
-                SpatieMediaLibraryFileUpload::make('photo')
-                    ->disk('r2')
-                    ->collection('student-photos')
-                    ->image()
-                    ->maxSize(1024)
-                    ->label('Student Photo'),
+                Forms\Components\Section::make('Personal Info')
+                    ->icon('heroicon-o-user')
+                    ->schema([
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('name')
+                                ->label('Full Name')
+                                ->required()
+                                ->maxLength(255),
+
+                            Forms\Components\TextInput::make('email')
+                                ->label('Email')
+                                ->email()
+                                ->required()
+                                ->unique('users', 'email', ignoreRecord: false)
+                                ->maxLength(255),
+                        ]),
+
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\DatePicker::make('date_of_birth')
+                                ->label('Date of Birth')
+                                ->nullable(),
+
+                            Forms\Components\Select::make('gender')
+                                ->label('Gender')
+                                ->options(collect(Gender::cases())->mapWithKeys(
+                                    fn (Gender $g): array => [$g->value => $g->label()]
+                                ))
+                                ->nullable(),
+                        ]),
+
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('blood_group')
+                                ->label('Blood Group')
+                                ->maxLength(5)
+                                ->nullable(),
+
+                            Forms\Components\TextInput::make('phone')
+                                ->tel()
+                                ->nullable()
+                                ->maxLength(20),
+                        ]),
+
+                        Forms\Components\Textarea::make('address')
+                            ->nullable()
+                            ->rows(2)
+                            ->columnSpanFull(),
+                    ]),
+
+                Forms\Components\Section::make('Academic Info')
+                    ->icon('heroicon-o-book-open')
+                    ->schema([
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('roll_number')
+                                ->label('Roll Number')
+                                ->required()
+                                ->unique('students', 'roll_number', ignoreRecord: true)
+                                ->maxLength(50),
+
+                            Forms\Components\TextInput::make('admission_number')
+                                ->label('Admission Number')
+                                ->unique('students', 'admission_number', ignoreRecord: true)
+                                ->nullable()
+                                ->maxLength(50),
+                        ]),
+
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\Select::make('college_class_id')
+                                ->label('Class')
+                                ->relationship('collegeClass', 'name')
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+
+                            Forms\Components\Select::make('department_id')
+                                ->label('Department')
+                                ->relationship('department', 'name')
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+                        ]),
+
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\Select::make('academic_year_id')
+                                ->label('Academic Year')
+                                ->options(fn (): array => AcademicYear::orderByDesc('start_year')->pluck('name', 'id')->all())
+                                ->searchable()
+                                ->nullable(),
+
+                            Forms\Components\Select::make('status')
+                                ->label('Status')
+                                ->options(collect(StudentStatus::cases())->mapWithKeys(
+                                    fn (StudentStatus $s): array => [$s->value => $s->label()]
+                                ))
+                                ->default(StudentStatus::Active->value)
+                                ->required(),
+                        ]),
+                    ]),
+
+                Forms\Components\Section::make('Account')
+                    ->icon('heroicon-o-lock-closed')
+                    ->schema([
+                        Forms\Components\TextInput::make('password')
+                            ->label('Password')
+                            ->password()
+                            ->revealable()
+                            ->required(fn (string $operation): bool => $operation === 'create')
+                            ->helperText(fn (string $operation): string => $operation === 'edit'
+                                ? 'Leave blank to keep the current password.'
+                                : '')
+                            ->minLength(8)
+                            ->maxLength(255),
+                    ]),
             ]);
     }
 
@@ -90,60 +180,89 @@ class StudentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('roll_number')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('user.email')
-                    ->label('Email')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('phone')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('department.name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('collegeClass.name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('admission_year')
+                    ->searchable()
                     ->sortable(),
-                SpatieMediaLibraryImageColumn::make('photo')
-                    ->collection('student-photos')
-                    ->label('Photo'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('roll_number')
+                    ->label('Roll No.')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('admission_number')
+                    ->label('Admission No.')
+                    ->searchable()
+                    ->placeholder('—'),
+
+                Tables\Columns\TextColumn::make('collegeClass.name')
+                    ->label('Class')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('department.name')
+                    ->label('Department')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('gender')
+                    ->label('Gender')
+                    ->badge()
+                    ->formatStateUsing(fn (?Gender $state): string => $state?->label() ?? '—')
+                    ->color(fn (?Gender $state): string => match ($state) {
+                        Gender::Male => 'info',
+                        Gender::Female => 'primary',
+                        Gender::Other => 'gray',
+                        null => 'gray',
+                    }),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (StudentStatus $state): string => $state->label())
+                    ->color(fn (StudentStatus $state): string => $state->color()),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['user', 'collegeClass', 'department']))
+            ->defaultSort('roll_number')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('college_class_id')
+                    ->label('Class')
+                    ->relationship('collegeClass', 'name'),
+
+                Tables\Filters\SelectFilter::make('department_id')
+                    ->label('Department')
+                    ->relationship('department', 'name'),
+
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->options(collect(StudentStatus::cases())->mapWithKeys(
+                        fn (StudentStatus $s): array => [$s->value => $s->label()]
+                    )),
+
+                Tables\Filters\SelectFilter::make('academic_year_id')
+                    ->label('Academic Year')
+                    ->options(fn (): array => AcademicYear::orderByDesc('start_year')->pluck('name', 'id')->all()),
             ])
             ->actions([
-                \Filament\Actions\EditAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStudents::route('/'),
-            'create' => Pages\CreateStudent::route('/create'),
-            'edit' => Pages\EditStudent::route('/{record}/edit'),
+            'index' => ListStudents::route('/'),
+            'create' => CreateStudent::route('/create'),
+            'edit' => EditStudent::route('/{record}/edit'),
         ];
     }
 }

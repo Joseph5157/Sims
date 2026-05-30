@@ -1,4 +1,11 @@
 <x-filament-panels::page>
+    {{-- Filters --}}
+    <x-filament::section>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {{ $this->form }}
+        </div>
+    </x-filament::section>
+
     @if ($defaulters->isEmpty())
         <x-filament::section>
             <div class="flex flex-col items-center justify-center py-16 text-center">

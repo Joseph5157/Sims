@@ -7,7 +7,13 @@
       "Bash(ls -la /c/Users/sikha/Herd/laravel-new-college-portal/.claude/worktrees/infallible-ishizaka/.env*)",
       "Bash(git add:*)",
       "Bash(git commit -m ':*)",
-      "Bash(find . -name \"*.php\" -type f -exec grep -l \"TODO\\\\|FIXME\\\\|HACK\\\\|XXX\" {} \\\\;)"
+      "Bash(find . -name \"*.php\" -type f -exec grep -l \"TODO\\|FIXME\\|HACK\\|XXX\" {} \\;)",
+      "Bash(\"C:/Users/sikha/.config/herd/bin/php84/php.exe\" artisan:*)",
+      "Bash(\"C:/Users/sikha/.config/herd/bin/php84/php.exe\" -l app/Filament/Admin/Pages/AttendanceDefaulters.php)",
+      "Bash(\"C:/Users/sikha/.config/herd/bin/php84/php.exe\" -l app/Filament/Admin/Resources/StudentResource.php)",
+      "Bash(\"C:/Users/sikha/.config/herd/bin/php84/php.exe\" -l app/Mail/AttendanceWarningMail.php)",
+      "Bash(\"C:/Users/sikha/.config/herd/bin/php84/php.exe\" -l app/Models/Student.php)",
+      "Bash(\"C:/Users/sikha/.config/herd/bin/php84/php.exe\" -l app/Providers/Filament/AdminPanelProvider.php)"
     ]
   }
 }

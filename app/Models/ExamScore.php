@@ -17,6 +17,7 @@ class ExamScore extends Model
         'grading_level_id',
         'absent',
         'remarks',
+        'writing_language',
         'entered_by',
     ];
 

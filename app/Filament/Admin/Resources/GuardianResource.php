@@ -6,16 +6,21 @@ use App\Filament\Admin\Resources\GuardianResource\Pages\CreateGuardian;
 use App\Filament\Admin\Resources\GuardianResource\Pages\EditGuardian;
 use App\Filament\Admin\Resources\GuardianResource\Pages\ListGuardians;
 use App\Models\Guardian;
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class GuardianResource extends Resource
 {
@@ -108,10 +113,54 @@ class GuardianResource extends Resource
                     ->color(fn ($state): string => (bool) $state ? 'success' : 'gray')
                     ->formatStateUsing(fn ($state): string => (bool) $state ? 'Primary' : 'No'),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with(['student.user']))
             ->filters([
                 //
             ])
             ->actions([
+                Action::make('create_login')
+                    ->label('Create Login')
+                    ->icon('heroicon-o-key')
+                    ->color('success')
+                    ->visible(fn (Guardian $record): bool => $record->user_id === null)
+                    ->form([
+                        Forms\Components\TextInput::make('email')
+                            ->label('Login Email')
+                            ->email()
+                            ->required()
+                            ->default(fn (Guardian $record): ?string => $record->email)
+                            ->unique('users', 'email')
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('password')
+                            ->label('Password')
+                            ->password()
+                            ->revealable()
+                            ->required()
+                            ->minLength(8)
+                            ->default(fn (): string => Str::random(10))
+                            ->helperText('Share this password with the parent.'),
+                    ])
+                    ->action(function (Guardian $record, array $data): void {
+                        $user = User::create([
+                            'name'              => $record->fullName(),
+                            'email'             => $data['email'],
+                            'password'          => Hash::make($data['password']),
+                            'email_verified_at' => now(),
+                        ]);
+
+                        $user->assignRole('parent');
+                        $record->update(['user_id' => $user->id]);
+
+                        Notification::make()
+                            ->title('Login created')
+                            ->body("Parent account created: {$data['email']}")
+                            ->success()
+                            ->send();
+                    })
+                    ->modalHeading('Create Parent Login')
+                    ->modalSubmitActionLabel('Create Login'),
+
                 EditAction::make(),
                 DeleteAction::make(),
             ])

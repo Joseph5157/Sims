@@ -31,5 +31,14 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
+
+        // Super admins bypass all gate checks before Spatie Permission queries
+        // the roles/permissions tables (which only exist in tenant databases,
+        // not the central DB).
+        Gate::before(function (\App\Models\User $user) {
+            if ($user->is_super_admin) {
+                return true;
+            }
+        });
     }
 }

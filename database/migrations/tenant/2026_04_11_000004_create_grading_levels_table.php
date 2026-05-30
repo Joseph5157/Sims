@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('grading_levels')) {
+            return;
+        }
+
         Schema::create('grading_levels', function (Blueprint $table): void {
             $table->id();
             $table->string('name');

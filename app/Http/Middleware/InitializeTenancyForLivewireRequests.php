@@ -34,6 +34,11 @@ class InitializeTenancyForLivewireRequests
             return $next($request);
         }
 
+        // Skip tenancy for requests coming from a central domain
+        if (in_array($request->getHost(), \App\Support\CentralDomains::resolve(), true)) {
+            return $next($request);
+        }
+
         return $this->initializeTenancyByDomain->handle($request, $next);
     }
 }
